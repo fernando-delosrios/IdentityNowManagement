@@ -1,0 +1,147 @@
+@url = http://localhost:3000
+@idnUrl = xxx
+
+@patId = xxx
+@patSecret = xxx
+
+
+### std:test-connection
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:test-connection",
+  "input": {},
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
+### std:account:list
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:list",
+  "input": {},
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}",
+        "includePermissions": false
+    }
+}
+
+### std:account:read
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:read",
+  "input": {
+    "identity": "3175644"
+  },
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
+### std:entitlement:list
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:entitlement:list",
+  "input": {
+        "type": "group"
+    },
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}",
+        "includePermissions": false
+    }
+}
+
+### std:entitlement:read
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:entitlement:read",
+  "input": {
+        "identity": "fc16aee3-0359-4d46-b746-b36459211660"
+    },
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}",
+        "includePermissions": false
+    }
+}
+
+### std:account:disable
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:disable",
+  "input": {
+    "identity": "993",
+    "key": { "simple": { "id": "993" } }
+  },
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
+### std:account:enable
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:enable",
+  "input": {
+    "identity": "993"
+  },
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
+### std:account:update
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:update",
+  "input": {"changes":[{"attribute":"groups","op":"Remove","value":"fc16aee3-0359-4d46-b746-b36459211660"}],"identity":"3175644","key":{"simple":{"id":"3175644"}}},
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
+### std:account:create
+POST {{url}}
+Content-Type: application/json
+
+{
+  "type": "std:account:create",
+  "input": {"attributes":{"groups":"fc16aee3-0359-4d46-b746-b36459211660","name":"cristian.grau"},"identity":null,"key":{"simple":{"id":null}}},
+  "config": {
+        "patId": "{{patId}}",
+        "patSecret": "{{patSecret}}",
+        "idnUrl": "{{idnUrl}}"
+    }
+}
+
