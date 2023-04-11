@@ -167,6 +167,33 @@ export class IDNClient {
         return await axios(request)
     }
 
+    async getRoleDetails(id: string): Promise<AxiosResponse> {
+        const accessToken = await this.getAccessToken()
+        const url: string = `/v3/search`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            baseURL: this.idnUrl,
+            url,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            params: null,
+            data: {
+                query: {
+                    query: `source.name.exact:IdentityNow AND attribute:assignedGroups AND value:${id}`,
+                },
+                indices: ['entitlements'],
+                includeNested: false,
+                sort: ['name'],
+            },
+        }
+
+        return await axios(request)
+    }
+
     async workgroupAggregation(): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
         const url: string = `/v2/workgroups`
@@ -197,33 +224,6 @@ export class IDNClient {
                 Authorization: `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
-            },
-        }
-
-        return await axios(request)
-    }
-
-    async getRoleDetails(id: string): Promise<AxiosResponse> {
-        const accessToken = await this.getAccessToken()
-        const url: string = `/v3/search`
-
-        let request: AxiosRequestConfig = {
-            method: 'post',
-            baseURL: this.idnUrl,
-            url,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-            params: null,
-            data: {
-                query: {
-                    query: `source.name.exact:IdentityNow AND attribute:assignedGroups AND value:${id}`,
-                },
-                indices: ['entitlements'],
-                includeNested: false,
-                sort: ['name'],
             },
         }
 

@@ -15,6 +15,8 @@ import {
     AttributeChangeOp,
     StdAccountUpdateInput,
     StdAccountUpdateOutput,
+    StdAccountCreateInput,
+    StdAccountCreateOutput,
 } from '@sailpoint/connector-sdk'
 import { AxiosResponse } from 'axios'
 import { IDNClient } from './idn-client'
@@ -125,6 +127,28 @@ export const connector = async () => {
                 res.send(workgroup)
             }
         })
+        .stdAccountCreate(
+            async (context: Context, input: StdAccountCreateInput, res: Response<StdAccountCreateOutput>) => {
+                logger.info(input)
+                const response1 = await client.getAccountDetailsByName(input.attributes.name as string)
+                const rawAccount = response1.data.pop()
+                const response2 = await client.getAccountDetails(rawAccount.name)
+                let account: Account = new Account(response2.data)
+                if (input.attributes.groups != null) {
+                    let values: string[] = []
+                        .concat(input.attributes.groups)
+                        .map((x: string) => (x === 'ORG_ADMIN' ? 'ADMIN' : x))
+                    for (let value of values) {
+                        await provisionEntitlement(AttributeChangeOp.Add, account, value)
+                    }
+                }
+                const workgroups: any[] = await getWorkgroups()
+                account = await buildAccount(rawAccount.name as string, workgroups)
+
+                logger.info(account)
+                res.send(account)
+            }
+        )
         .stdEntitlementRead(
             async (context: Context, input: StdEntitlementReadInput, res: Response<StdEntitlementReadOutput>) => {
                 logger.info(input)
