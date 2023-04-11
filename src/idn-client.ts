@@ -105,7 +105,8 @@ export class IDNClient {
 
     async getAccountDetails(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `/v2/identities/${id}`
+        const encodedId = encodeURIComponent(id)
+        const url: string = `/v2/identities/${encodedId}`
 
         let request: AxiosRequestConfig = {
             method: 'get',
