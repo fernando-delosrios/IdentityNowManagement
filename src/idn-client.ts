@@ -91,7 +91,7 @@ export class IDNClient {
         let data: any[] = []
 
         let response = await axios(request)
-        const total: number = parseInt(response.headers['X-Total-Count'])
+        const total: number = parseInt(response.headers['x-total-count'])
         data = [...data, ...response.data]
 
         while (total > data.length) {

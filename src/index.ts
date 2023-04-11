@@ -127,6 +127,25 @@ export const connector = async () => {
                 res.send(workgroup)
             }
         })
+        .stdEntitlementRead(
+            async (context: Context, input: StdEntitlementReadInput, res: Response<StdEntitlementReadOutput>) => {
+                logger.info(input)
+
+                if (workgroupRegex.test(input.identity)) {
+                    const response: AxiosResponse = await client.getWorkgroup(input.identity)
+                    const workgroup: Workgroup = new Workgroup(response.data)
+
+                    logger.info(workgroup)
+                    res.send(workgroup)
+                } else {
+                    const response: AxiosResponse = await client.getRoleDetails(input.identity)
+                    const role: Role = new Role(response.data.pop())
+
+                    logger.info(role)
+                    res.send(role)
+                }
+            }
+        )
         .stdAccountCreate(
             async (context: Context, input: StdAccountCreateInput, res: Response<StdAccountCreateOutput>) => {
                 logger.info(input)
@@ -147,25 +166,6 @@ export const connector = async () => {
 
                 logger.info(account)
                 res.send(account)
-            }
-        )
-        .stdEntitlementRead(
-            async (context: Context, input: StdEntitlementReadInput, res: Response<StdEntitlementReadOutput>) => {
-                logger.info(input)
-
-                if (workgroupRegex.test(input.identity)) {
-                    const response: AxiosResponse = await client.getWorkgroup(input.identity)
-                    const workgroup: Workgroup = new Workgroup(response.data)
-
-                    logger.info(workgroup)
-                    res.send(workgroup)
-                } else {
-                    const response: AxiosResponse = await client.getRoleDetails(input.identity)
-                    const role: Role = new Role(response.data.pop())
-
-                    logger.info(role)
-                    res.send(role)
-                }
             }
         )
         .stdAccountDisable(async (context: Context, input: any, res: Response<any>) => {
