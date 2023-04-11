@@ -95,7 +95,7 @@ export class IDNClient {
         data = [...data, ...response.data]
 
         while (total > data.length) {
-            request.data.searchAfter = data[data.length - 1]['id']
+            request.data.searchAfter = [data[data.length - 1]['id']]
             response = await axios(request)
             data = [...data, ...response.data]
         }
