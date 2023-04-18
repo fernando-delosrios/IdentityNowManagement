@@ -249,52 +249,6 @@ export class IDNClient {
         return await axios(request)
     }
 
-    async enableAccount(id: string): Promise<AxiosResponse> {
-        const accessToken = await this.getAccessToken()
-        const url: string = `/cc/api/user/enabled`
-
-        let request: AxiosRequestConfig = {
-            method: 'post',
-            baseURL: this.idnUrl,
-            url,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Accept: 'application/json',
-            },
-            params: {
-                ids: id,
-                enabled: true,
-            },
-            data: null,
-        }
-
-        return await axios(request)
-    }
-
-    async disableAccount(id: string): Promise<AxiosResponse> {
-        const accessToken = await this.getAccessToken()
-        const url: string = `/cc/api/user/enabled`
-
-        let request: AxiosRequestConfig = {
-            method: 'post',
-            baseURL: this.idnUrl,
-            url,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Accept: 'application/json',
-            },
-            params: {
-                ids: id,
-                enabled: false,
-            },
-            data: null,
-        }
-
-        return await axios(request)
-    }
-
     async addRole(id: string, role: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
         const url: string = `/cc/api/user/updatePermissions`
@@ -382,6 +336,52 @@ export class IDNClient {
                 add: [],
                 remove: [id],
             },
+        }
+
+        return await axios(request)
+    }
+
+    async enableAccount(id: string): Promise<AxiosResponse> {
+        const accessToken = await this.getAccessToken()
+        const url: string = `/cc/api/user/enabled`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            baseURL: this.idnUrl,
+            url,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            params: {
+                ids: id,
+                enabled: true,
+            },
+            data: null,
+        }
+
+        return await axios(request)
+    }
+
+    async disableAccount(id: string): Promise<AxiosResponse> {
+        const accessToken = await this.getAccessToken()
+        const url: string = `/cc/api/user/enabled`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            baseURL: this.idnUrl,
+            url,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Accept: 'application/json',
+            },
+            params: {
+                ids: id,
+                enabled: false,
+            },
+            data: null,
         }
 
         return await axios(request)

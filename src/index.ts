@@ -28,11 +28,13 @@ import { Workgroup } from './model/workgroup'
 export const connector = async () => {
     // Get connector source config
     const config = await readConfig()
-    const SLEEP: number = 2000
-    const workgroupRegex = /.+-.+-.+-.+-.+/
+    
 
     // Use the vendor SDK, or implement own client as necessary, to initialize a client
     const client = new IDNClient(config)
+
+    const SLEEP: number = 2000
+    const workgroupRegex = /.+-.+-.+-.+-.+/
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms))
@@ -168,28 +170,6 @@ export const connector = async () => {
                 res.send(account)
             }
         )
-        .stdAccountDisable(async (context: Context, input: any, res: Response<any>) => {
-            logger.info(input)
-            const workgroups: any[] = await getWorkgroups()
-            const account: Account = await buildAccount(input.identity, workgroups)
-
-            const response = await client.disableAccount(account.attributes.id as string)
-            account.attributes.enabled = false
-
-            logger.info(account)
-            res.send(account)
-        })
-        .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
-            logger.info(input)
-            const workgroups: any[] = await getWorkgroups()
-            const account: Account = await buildAccount(input.identity, workgroups)
-
-            const response = await client.enableAccount(account.attributes.id as string)
-            account.attributes.enabled = false
-
-            logger.info(account)
-            res.send(account)
-        })
         .stdAccountUpdate(
             async (context: Context, input: StdAccountUpdateInput, res: Response<StdAccountUpdateOutput>) => {
                 logger.info(input)
@@ -215,4 +195,26 @@ export const connector = async () => {
                 res.send(account)
             }
         )
+        .stdAccountDisable(async (context: Context, input: any, res: Response<any>) => {
+            logger.info(input)
+            const workgroups: any[] = await getWorkgroups()
+            const account: Account = await buildAccount(input.identity, workgroups)
+
+            const response = await client.disableAccount(account.attributes.id as string)
+            account.attributes.enabled = false
+
+            logger.info(account)
+            res.send(account)
+        })
+        .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
+            logger.info(input)
+            const workgroups: any[] = await getWorkgroups()
+            const account: Account = await buildAccount(input.identity, workgroups)
+
+            const response = await client.enableAccount(account.attributes.id as string)
+            account.attributes.enabled = false
+
+            logger.info(account)
+            res.send(account)
+        })
 }

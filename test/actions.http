@@ -29,8 +29,7 @@ Content-Type: application/json
   "config": {
         "patId": "{{patId}}",
         "patSecret": "{{patSecret}}",
-        "idnUrl": "{{idnUrl}}",
-        "includePermissions": false
+        "idnUrl": "{{idnUrl}}"
     }
 }
 

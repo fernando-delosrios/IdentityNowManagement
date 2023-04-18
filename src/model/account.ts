@@ -4,6 +4,7 @@ export class Account {
     identity: string
     uuid: string
     attributes: Attributes
+    disabled: boolean
 
     constructor(object: any) {
         this.attributes = {
@@ -16,6 +17,7 @@ export class Account {
             enabled: !object.inactive,
             groups: object.role,
         }
+        this.disabled = object.inactive
         this.identity = this.attributes.id as string
         this.uuid = this.attributes.name as string
     }

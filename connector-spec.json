@@ -1,15 +1,15 @@
 {
-    "name": "IdentityNowManagement",
+    "name": "IdentityNow Management",
     "commands": [
-        "std:account:create",
-        "std:account:enable",
-        "std:account:disable",
+        "std:test-connection",
         "std:account:list",
         "std:account:read",
-        "std:account:update",
         "std:entitlement:list",
         "std:entitlement:read",
-        "std:test-connection"
+        "std:account:update",
+        "std:account:create",
+        "std:account:enable",
+        "std:account:disable"
     ],
     "sourceConfig": [
         {
