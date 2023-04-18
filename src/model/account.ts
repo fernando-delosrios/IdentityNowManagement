@@ -17,7 +17,7 @@ export class Account {
             enabled: !object.inactive,
             groups: object.role,
         }
-        this.disabled = object.inactive
+        this.disabled = !this.attributes.enabled
         this.identity = this.attributes.id as string
         this.uuid = this.attributes.name as string
     }
