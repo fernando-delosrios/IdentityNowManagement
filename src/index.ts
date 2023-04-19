@@ -211,7 +211,7 @@ export const connector = async () => {
 
                     logger.info(account)
                     res.send(account)
-                    return
+                    break
                 } catch (e) {
                     let message = ''
                     if (typeof e === 'string') {
@@ -240,7 +240,7 @@ export const connector = async () => {
 
                     logger.info(account)
                     res.send(account)
-                    return
+                    break
                 } catch (e) {
                     let message = ''
                     if (typeof e === 'string') {
