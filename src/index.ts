@@ -205,7 +205,7 @@ export const connector = async () => {
             let retries = config.enableRetries
             while (retries > 0) {
                 try {
-                    const response = await client.disableAccount(account.attributes.externalId as string)
+                    const response = await client.disableAccount(account.attributes.id as string)
                     account.attributes.enabled = false
                     account.disabled = true
 
@@ -234,7 +234,7 @@ export const connector = async () => {
             let retries = config.enableRetries
             while (retries > 0) {
                 try {
-                    const response = await client.enableAccount(account.attributes.externalId as string)
+                    const response = await client.enableAccount(account.attributes.id as string)
                     account.attributes.enabled = true
                     account.disabled = false
 
