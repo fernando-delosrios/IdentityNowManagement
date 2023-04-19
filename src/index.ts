@@ -200,7 +200,7 @@ export const connector = async () => {
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
 
-            const response = await client.disableAccount(account.attributes.id as string)
+            const response = await client.disableAccount(account.attributes.externalId as string)
             account.attributes.enabled = false
 
             logger.info(account)
@@ -211,7 +211,7 @@ export const connector = async () => {
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
 
-            const response = await client.enableAccount(account.attributes.id as string)
+            const response = await client.enableAccount(account.attributes.externalId as string)
             account.attributes.enabled = false
 
             logger.info(account)
