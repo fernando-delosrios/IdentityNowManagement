@@ -36,6 +36,19 @@
                     "required": true
                 }
             ]
+        },
+        {
+            "type": "section",
+            "sectionTitle": "Configuration details",
+            "sectionHelpMessage": "Add your configuration details here",
+            "items": [
+                {
+                    "key": "enableRetries",
+                    "label": "Number of retries for enable/disable account operations",
+                    "type": "number",
+                    "required": true
+                }
+            ]
         }
     ],
     "accountSchema": {

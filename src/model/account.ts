@@ -14,7 +14,7 @@ export class Account {
             firstName: object.attributes.firstname,
             lastName: object.attributes.lastname,
             displayName: object.name,
-            enabled: !object.inactive,
+            enabled: object.enabled,
             groups: object.role,
         }
         this.disabled = !this.attributes.enabled

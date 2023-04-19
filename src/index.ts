@@ -28,13 +28,13 @@ import { Workgroup } from './model/workgroup'
 export const connector = async () => {
     // Get connector source config
     const config = await readConfig()
-    
 
     // Use the vendor SDK, or implement own client as necessary, to initialize a client
     const client = new IDNClient(config)
 
     const SLEEP: number = 2000
     const workgroupRegex = /.+-.+-.+-.+-.+/
+    const EXCLUDED_ROLES = ['AUDITOR', 'DASHBOARD']
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms))
@@ -117,10 +117,12 @@ export const connector = async () => {
             const response1: AxiosResponse = await client.roleAggregation()
             const response2: AxiosResponse = await client.workgroupAggregation()
             for (const r of response1.data) {
-                const role: Role = new Role(r)
+                if (!EXCLUDED_ROLES.includes(r.value)) {
+                    const role: Role = new Role(r)
 
-                logger.info(role)
-                res.send(role)
+                    logger.info(role)
+                    res.send(role)
+                }
             }
             for (const w of response2.data) {
                 const workgroup: Workgroup = new Workgroup(w)
@@ -200,21 +202,57 @@ export const connector = async () => {
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
 
-            const response = await client.disableAccount(account.attributes.externalId as string)
-            account.attributes.enabled = false
+            let retries = config.enableRetries
+            while (retries > 0) {
+                try {
+                    const response = await client.disableAccount(account.attributes.externalId as string)
+                    account.attributes.enabled = false
+                    account.disabled = true
 
-            logger.info(account)
-            res.send(account)
+                    logger.info(account)
+                    res.send(account)
+                    return
+                } catch (e) {
+                    let message = ''
+                    if (typeof e === 'string') {
+                        message = e
+                    } else if (e instanceof Error) {
+                        message = e.message
+                    }
+                    retries--
+                    const retries_left = config.enableRetries - retries
+                    logger.info(`Retry ${retries_left}/${config.enableRetries} failed with error "${message}"`)
+                    await sleep(SLEEP)
+                }
+            }
         })
         .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
 
-            const response = await client.enableAccount(account.attributes.externalId as string)
-            account.attributes.enabled = false
+            let retries = config.enableRetries
+            while (retries > 0) {
+                try {
+                    const response = await client.enableAccount(account.attributes.externalId as string)
+                    account.attributes.enabled = true
+                    account.disabled = false
 
-            logger.info(account)
-            res.send(account)
+                    logger.info(account)
+                    res.send(account)
+                    return
+                } catch (e) {
+                    let message = ''
+                    if (typeof e === 'string') {
+                        message = e
+                    } else if (e instanceof Error) {
+                        message = e.message
+                    }
+                    retries--
+                    const retries_left = config.enableRetries - retries
+                    logger.info(`Retry ${retries_left}/${config.enableRetries} failed with error "${message}"`)
+                    await sleep(SLEEP)
+                }
+            }
         })
 }

@@ -343,7 +343,7 @@ export class IDNClient {
 
     async enableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `beta/identities-accounts/enable`
+        const url: string = `/beta/identities-accounts/enable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
@@ -355,7 +355,7 @@ export class IDNClient {
                 Accept: 'application/json',
             },
             data: {
-                "identityIds": [id],
+                identityIds: [id],
             },
         }
 
@@ -364,7 +364,7 @@ export class IDNClient {
 
     async disableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `beta/identities-accounts/disable`
+        const url: string = `/beta/identities-accounts/disable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
@@ -376,7 +376,7 @@ export class IDNClient {
                 Accept: 'application/json',
             },
             data: {
-                "identityIds": [id],
+                identityIds: [id],
             },
         }
         return await axios(request)
