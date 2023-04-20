@@ -343,7 +343,7 @@ export class IDNClient {
 
     async enableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `beta/identities-accounts/${id}/enable`
+        const url: string = `/beta/identities-accounts/${id}/enable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
@@ -360,7 +360,7 @@ export class IDNClient {
 
     async disableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `beta/identities-accounts/${id}/disable`
+        const url: string = `/beta/identities-accounts/${id}/disable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
