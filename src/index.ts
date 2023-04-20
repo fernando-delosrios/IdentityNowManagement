@@ -35,6 +35,7 @@ export const connector = async () => {
 
     const SLEEP: number = 2000
     const workgroupRegex = /.+-.+-.+-.+-.+/
+    const EXCLUDED_ROLES = ['AUDITOR', 'DASHBOARD']
 
     function sleep(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms))
@@ -117,10 +118,12 @@ export const connector = async () => {
             const response1: AxiosResponse = await client.roleAggregation()
             const response2: AxiosResponse = await client.workgroupAggregation()
             for (const r of response1.data) {
-                const role: Role = new Role(r)
+                if (!EXCLUDED_ROLES.includes(r.value)) {
+                    const role: Role = new Role(r)
 
-                logger.info(role)
-                res.send(role)
+                    logger.info(role)
+                    res.send(role)
+                }
             }
             for (const w of response2.data) {
                 const workgroup: Workgroup = new Workgroup(w)
