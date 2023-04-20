@@ -74,7 +74,7 @@
                 "description": ""
             },
             {
-                "name": "enabled",
+                "name": "disabled",
                 "type": "boolean",
                 "description": ""
             },

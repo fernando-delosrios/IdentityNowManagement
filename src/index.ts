@@ -199,22 +199,21 @@ export const connector = async () => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
-
-            const response = await client.disableAccount(account.attributes.externalId as string)
-            account.attributes.enabled = false
-
+            account.attributes.enabled= false
             logger.info(account)
             res.send(account)
+            const response = await client.disableAccount(account.attributes.externalId as string)
+
+
+
         })
         .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
-
-            const response = await client.enableAccount(account.attributes.externalId as string)
-            account.attributes.enabled = false
-
+            account.attributes.enabled = true
             logger.info(account)
             res.send(account)
+            const response = await client.enableAccount(account.attributes.externalId as string)
         })
 }
