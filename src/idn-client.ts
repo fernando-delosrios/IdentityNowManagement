@@ -343,7 +343,7 @@ export class IDNClient {
 
     async enableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `/cc/api/user/enabled`
+        const url: string = `/beta/identities-accounts/${id}/enable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
@@ -351,13 +351,8 @@ export class IDNClient {
             url,
             headers: {
                 Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Accept: 'application/json',
             },
-            params: {
-                ids: id,
-                enabled: true,
-            },
+            data: null,
         }
 
         return await axios(request)
@@ -365,23 +360,17 @@ export class IDNClient {
 
     async disableAccount(id: string): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
-        const url: string = `/cc/api/user/enabled`
+        const url: string = `/beta/identities-accounts/${id}/disable`
 
         let request: AxiosRequestConfig = {
             method: 'post',
             baseURL: this.idnUrl,
             url,
             headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded',
-                Accept: 'application/json',
+                Authorization: `Bearer ${accessToken}`
             },
-            params: {
-                ids: id,
-                enabled: false,
-            },
+            data: null,
         }
-
         return await axios(request)
     }
 }

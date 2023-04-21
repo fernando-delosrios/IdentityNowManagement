@@ -28,6 +28,7 @@ import { Workgroup } from './model/workgroup'
 export const connector = async () => {
     // Get connector source config
     const config = await readConfig()
+    
 
     // Use the vendor SDK, or implement own client as necessary, to initialize a client
     const client = new IDNClient(config)
@@ -201,58 +202,21 @@ export const connector = async () => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
+            account.attributes.enabled= false
+            logger.info(account)
+            res.send(account)
+            const response = await client.disableAccount(account.attributes.externalId as string)
 
-            let retries = config.enableRetries
-            while (retries > 0) {
-                try {
-                    const response = await client.disableAccount(account.attributes.id as string)
-                    account.attributes.enabled = false
-                    account.disabled = true
 
-                    logger.info(account)
-                    res.send(account)
-                    break
-                } catch (e) {
-                    let message = ''
-                    if (typeof e === 'string') {
-                        message = e
-                    } else if (e instanceof Error) {
-                        message = e.message
-                    }
-                    retries--
-                    const retries_left = config.enableRetries - retries
-                    logger.info(`Retry ${retries_left}/${config.enableRetries} failed with error "${message}"`)
-                    await sleep(SLEEP)
-                }
-            }
+
         })
         .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
-
-            let retries = config.enableRetries
-            while (retries > 0) {
-                try {
-                    const response = await client.enableAccount(account.attributes.id as string)
-                    account.attributes.enabled = true
-                    account.disabled = false
-
-                    logger.info(account)
-                    res.send(account)
-                    break
-                } catch (e) {
-                    let message = ''
-                    if (typeof e === 'string') {
-                        message = e
-                    } else if (e instanceof Error) {
-                        message = e.message
-                    }
-                    retries--
-                    const retries_left = config.enableRetries - retries
-                    logger.info(`Retry ${retries_left}/${config.enableRetries} failed with error "${message}"`)
-                    await sleep(SLEEP)
-                }
-            }
+            account.attributes.enabled = true
+            logger.info(account)
+            res.send(account)
+            const response = await client.enableAccount(account.attributes.externalId as string)
         })
 }
