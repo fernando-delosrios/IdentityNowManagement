@@ -28,7 +28,7 @@ import { Workgroup } from './model/workgroup'
 export const connector = async () => {
     // Get connector source config
     const config = await readConfig()
-    
+    const removeGroups = config.removeGroups
 
     // Use the vendor SDK, or implement own client as necessary, to initialize a client
     const client = new IDNClient(config)
@@ -66,22 +66,64 @@ export const connector = async () => {
     }
 
     const provisionEntitlement = async (action: AttributeChangeOp, account: Account, entitlement: string) => {
-        logger.info(`Executing ${action} operation for ${account.uuid}/${entitlement}`)
-        if (workgroupRegex.test(entitlement)) {
+        logger.info(`Governance Group| Executing ${action} operation for ${account.uuid}/${entitlement}`)
+        
             if (action === AttributeChangeOp.Add) {
                 await client.addWorkgroup(account.attributes.externalId as string, entitlement)
             } else if (action === AttributeChangeOp.Remove) {
                 await client.removeWorkgroup(account.attributes.externalId as string, entitlement)
             }
-        } else {
+        
+    }
+
+    const provisionPermission = async (action: AttributeChangeOp, account: Account, entitlements: string[]) => {
+        logger.info(`Roles| Executing ${action} operation for ${account.uuid}/${entitlements}`)
             if (action === AttributeChangeOp.Add) {
-                await client.addRole(account.attributes.id as string, entitlement)
-            } else if (action === AttributeChangeOp.Remove) {
-                await client.removeRole(account.attributes.id as string, entitlement)
-            }
-            //Looks like /cc/api/user/updatePermissions endpoint needs some cooldown before being called again or requests won't take effect
-            await sleep(SLEEP)
+                const capabilities: string[] = await client.getCapabilties(account.attributes.externalId as string) || [];
+                for(const capability of entitlements)
+                {
+                    capabilities.push(capability)
+                }
+                await client.addRole(account.attributes.externalId as string, capabilities);
+            } 
+            else if (action === AttributeChangeOp.Remove) {
+                const capabilities: string[]  = await client.getCapabilties(account.attributes.externalId as string) || [];
+                let  updatedCapabilities: string[] = capabilities
+                for (const capability of entitlements)
+                {
+                    updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
+                }
+                await client.removeRole(account.attributes.externalId as string, updatedCapabilities)
+            
         }
+    }
+
+    const removeAll = async(account:Account, groups: any) =>
+    {
+        const rolesToRemove: string[] = [];
+        if (groups) {
+            let roles: string[] = [];
+            if (Array.isArray(groups)) {
+                roles = groups;
+            } else {
+                roles.push(groups);
+            }
+            console.log(roles)
+        for (const group of roles) {
+            if (workgroupRegex.test(group)) {
+                await provisionEntitlement(AttributeChangeOp.Remove, account, group);
+            } else {
+                rolesToRemove.push(group);
+            }
+        }
+        if(rolesToRemove){
+        await provisionPermission(AttributeChangeOp.Remove, account, rolesToRemove);}
+    }
+    }
+
+    const getLifecycle = async(id:any) =>
+    {
+        return await client.getLCS(id)
     }
 
     return createConnector()
@@ -161,10 +203,15 @@ export const connector = async () => {
                 if (input.attributes.groups != null) {
                     let values: string[] = []
                         .concat(input.attributes.groups)
-                        .map((x: string) => (x === 'ORG_ADMIN' ? 'ADMIN' : x))
-                    for (let value of values) {
-                        await provisionEntitlement(AttributeChangeOp.Add, account, value)
-                    }
+                    let roles: string[] = values
+                    for (const value of values) {
+                        if(workgroupRegex.test(value)){
+                            
+                            await provisionEntitlement(AttributeChangeOp.Add, account, value)
+                            roles = roles.filter(cap => cap !== value);
+                        }
+                        }
+                        await provisionPermission(AttributeChangeOp.Add, account, roles)
                 }
                 const workgroups: any[] = await getWorkgroups()
                 account = await buildAccount(rawAccount.name as string, workgroups)
@@ -181,13 +228,19 @@ export const connector = async () => {
                 for (const change of input.changes) {
                     const values: string[] = []
                         .concat(change.value)
-                        .map((x: string) => (x === 'ORG_ADMIN' ? 'ADMIN' : x))
+                    let roles: string[] = values
                     if (change.op === AttributeChangeOp.Set) {
                         throw new ConnectorError(`Operation not supported: ${change.op}`)
                     } else {
+                        
                         for (const value of values) {
+                        if(workgroupRegex.test(value)){
+                            
                             await provisionEntitlement(change.op, account, value)
+                            roles = roles.filter(cap => cap !== value);
                         }
+                        }
+                        await provisionPermission(change.op, account, roles)
                     }
                 }
 
@@ -202,21 +255,30 @@ export const connector = async () => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
+            const groups = account.attributes.groups as string||[]
+            if (removeGroups && Array.isArray(groups) && groups.length > 0) {
+                const LCS: any = await getLifecycle(account.attributes.externalId)
+                if(typeof LCS === "string" && LCS.toLowerCase() === "inactive"){
+                removeAll(account,groups)
+                account.attributes.groups=[]
+                }
+            } 
             account.attributes.enabled= false
             logger.info(account)
             res.send(account)
-            const response = await client.disableAccount(account.attributes.externalId as string)
-
-
-
+            await sleep(SLEEP)
+            await client.disableAccount(account.attributes.externalId as string)
         })
+
         .stdAccountEnable(async (context: Context, input: any, res: Response<any>) => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
+            
             account.attributes.enabled = true
             logger.info(account)
             res.send(account)
-            const response = await client.enableAccount(account.attributes.externalId as string)
+            await sleep(SLEEP)
+            await client.enableAccount(account.attributes.externalId as string)
         })
 }
