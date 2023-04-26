@@ -107,6 +107,8 @@ export class IDNClient {
         return axios(request)
     }
 
+
+
     async accountAggregation(): Promise<AxiosResponse> {
         const accessToken = await this.getAccessToken()
         const url: string = `/v3/search`
@@ -432,7 +434,6 @@ export class IDNClient {
     }
 
     async getCapabilties(id: string): Promise<string[] | undefined> {
-
             const Token = await this.obtainAccessToken();
             const url: string = `/oathkeeper/auth-user-v3/auth-users/${id}`
             let request: AxiosRequestConfig = {
@@ -447,11 +448,4 @@ export class IDNClient {
             const response: AxiosResponse = await axios(request)
             return response.data.capabilities ?? [];
         }
-
-
-        
-    
-    
-
-
 }

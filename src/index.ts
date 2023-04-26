@@ -66,7 +66,7 @@ export const connector = async () => {
     }
 
     const provisionEntitlement = async (action: AttributeChangeOp, account: Account, entitlement: string) => {
-        logger.info(`Roles| Executing ${action} operation for ${account.uuid}/${entitlement}`)
+        logger.info(`Governance Group| Executing ${action} operation for ${account.uuid}/${entitlement}`)
         
             if (action === AttributeChangeOp.Add) {
                 await client.addWorkgroup(account.attributes.externalId as string, entitlement)
@@ -77,7 +77,7 @@ export const connector = async () => {
     }
 
     const provisionPermission = async (action: AttributeChangeOp, account: Account, entitlements: string[]) => {
-        logger.info(`Governance Group| Executing ${action} operation for ${account.uuid}/${entitlements}`)
+        logger.info(`Roles| Executing ${action} operation for ${account.uuid}/${entitlements}`)
             if (action === AttributeChangeOp.Add) {
                 const capabilities: string[] = await client.getCapabilties(account.attributes.externalId as string) || [];
                 for(const capability of entitlements)
