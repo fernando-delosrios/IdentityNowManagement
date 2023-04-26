@@ -277,7 +277,7 @@ export class IDNClient {
             },
         }
 
-        rwait axios(request)
+        return await axios(request)
     }
 
     async getWorkgroup(id: string): Promise<AxiosResponse> {
