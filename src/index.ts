@@ -129,8 +129,9 @@ export const connector = async () => {
     return createConnector()
         .stdTestConnection(async (context: Context, input: undefined, res: Response<StdTestConnectionOutput>) => {
             const response: AxiosResponse = await client.testConnection()
-            if (response.status != 200) {
-                throw new ConnectorError('Unable to connect to IdentityNow')
+            const response1 = await client.obtainAccessToken()
+            if (response.status != 200 || typeof response1 !== 'string') {
+                throw new ConnectorError('Unable to connect to IdentityNow! Please check your Username and Password')
             } else {
                 logger.info('Test successful!')
                 res.send({})
