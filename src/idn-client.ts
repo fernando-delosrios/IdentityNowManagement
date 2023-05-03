@@ -81,7 +81,7 @@ export class IDNClient {
             try {
                 this.accessToken1 = await accessTokenPromise;
                 this.expiryDate1 = new Date();
-                // Set expiry date to 60 minutes from now
+                // Set expiry date to 15 minutes from now
                 this.expiryDate1.setMinutes(this.expiryDate1.getMinutes()+15)
             } catch (err) {
                 console.error('Error obtaining access token:', err);
