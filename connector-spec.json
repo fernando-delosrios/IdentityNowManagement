@@ -13,58 +13,74 @@
     ],
     "sourceConfig": [
         {
-            "type": "section",
-            "sectionTitle": "IdentityNow connection details",
-            "sectionHelpMessage": "Add your connection details here",
+            "type": "menu",
+            "label": "Configuration",
             "items": [
                 {
-                    "key": "idnUrl",
-                    "label": "IdentityNow API URL",
-                    "type": "url",
-                    "required": true
+                    "type": "section",
+                    "sectionTitle": "IdentityNow connection details",
+                    "sectionHelpMessage": "Add your connection details here",
+                    "items": [
+                        {
+                            "key": "idnUrl",
+                            "label": "IdentityNow API URL",
+                            "type": "url",
+                            "required": true
+                        },
+                        {
+                            "key": "sailpointlogin",
+                            "label": "SailPoint Login URL",
+                            "placeholder": "https://*.login.sailpoint.com/auth",
+                            "type": "text",
+                            "required": true  
+                        },
+                        {
+                            "key": "patId",
+                            "label": "Personal Access Token ID",
+                            "type": "text",
+                            "required": true
+                        },
+                        {
+                            "key": "patSecret",
+                            "label": "Personal Access Token secret",
+                            "type": "secret",
+                            "required": true
+                        },
+                        {
+                            "key": "IDToken1",
+                            "label": "Username",
+                            "placeholder": "IDToken1",
+                            "type": "text",
+                            "required": true
+                        },
+                        {
+                            "key": "IDToken2",
+                            "label": "Hashed Password",
+                            "placeholder": "IDToken2",
+                            "type": "secret",
+                            "required": true
+                        }
+                    ]
                 },
                 {
-                    "key": "sailpointlogin",
-                    "label": "SailPoint Login URL",
-                    "placeholder": "https://*.login.sailpoint.com/auth",
-                    "type": "text",
-                    "required": true  
-                },
-                {
-                    "key": "patId",
-                    "label": "Personal Access Token ID",
-                    "type": "text",
-                    "required": true
-                },
-                {
-                    "key": "patSecret",
-                    "label": "Personal Access Token secret",
-                    "type": "secret",
-                    "required": true
-                },
-                {
-                    "key": "IDToken1",
-                    "label": "Username",
-                    "placeholder": "IDToken1",
-                    "type": "text",
-                    "required": true
-                },
-                {
-                    "key": "IDToken2",
-                    "label": "Hashed Password",
-                    "placeholder": "IDToken2",
-                    "type": "secret",
-                    "required": true
-                },
-                {
-                    "key": "removeGroups",
-                    "label": "Remove all entitlements upon Inactive state on Disable",
-                    "type": "checkbox"
+                    "type": "section",
+                    "sectionTitle": "Configuration details",
+                    "sectionHelpMessage": "Add your configuration details here",
+                    "items": [
+                        {
+                            "key": "removeGroups",
+                            "label": "Remove all entitlements upon Inactive state on Disable",
+                            "type": "checkbox"
+                        },
+                        {
+                            "key": "includeWorkgroups",
+                            "label": "Include governance groups",
+                            "type": "checkbox"
+                        }
+                    ]
                 }
-                
-                
             ]
-        }
+        }   
     ],
     "accountSchema": {
         "displayAttribute": "name",
