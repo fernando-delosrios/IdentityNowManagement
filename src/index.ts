@@ -17,6 +17,7 @@ import {
     StdAccountUpdateOutput,
     StdAccountCreateInput,
     StdAccountCreateOutput,
+    StdAccountListInput,
 } from '@sailpoint/connector-sdk'
 import { AxiosResponse } from 'axios'
 import { IDNClient } from './idn-client'
@@ -29,6 +30,7 @@ export const connector = async () => {
     // Get connector source config
     const config = await readConfig()
     const removeGroups = config.removeGroups
+    const includeWorkgroups = config.includeWorkgroups
 
     // Use the vendor SDK, or implement own client as necessary, to initialize a client
     const client = new IDNClient(config)
@@ -43,11 +45,13 @@ export const connector = async () => {
 
     const getWorkgroups = async (): Promise<any> => {
         const workgroups: any[] = []
-        const response1 = await client.workgroupAggregation()
-        for (const workgroup of response1.data) {
-            const response2 = await client.getWorkgroupDetails(workgroup.id)
-            workgroup.members = response2.data
-            workgroups.push(workgroup)
+        if (includeWorkgroups) {
+            const response1 = await client.workgroupAggregation()
+            for (const workgroup of response1.data) {
+                const response2 = await client.getWorkgroupDetails(workgroup.id)
+                workgroup.members = response2.data
+                workgroups.push(workgroup)
+            }
         }
         return workgroups
     }
@@ -67,62 +71,56 @@ export const connector = async () => {
 
     const provisionEntitlement = async (action: AttributeChangeOp, account: Account, entitlement: string) => {
         logger.info(`Governance Group| Executing ${action} operation for ${account.uuid}/${entitlement}`)
-        
-            if (action === AttributeChangeOp.Add) {
-                await client.addWorkgroup(account.attributes.externalId as string, entitlement)
-            } else if (action === AttributeChangeOp.Remove) {
-                await client.removeWorkgroup(account.attributes.externalId as string, entitlement)
-            }
-        
+
+        if (action === AttributeChangeOp.Add) {
+            await client.addWorkgroup(account.attributes.externalId as string, entitlement)
+        } else if (action === AttributeChangeOp.Remove) {
+            await client.removeWorkgroup(account.attributes.externalId as string, entitlement)
+        }
     }
 
     const provisionPermission = async (action: AttributeChangeOp, account: Account, entitlements: string[]) => {
         logger.info(`Roles| Executing ${action} operation for ${account.uuid}/${entitlements}`)
-            if (action === AttributeChangeOp.Add) {
-                const capabilities: string[] = await client.getCapabilties(account.attributes.externalId as string) || [];
-                for(const capability of entitlements)
-                {
-                    capabilities.push(capability)
-                }
-                await client.addRole(account.attributes.externalId as string, capabilities);
-            } 
-            else if (action === AttributeChangeOp.Remove) {
-                const capabilities: string[]  = await client.getCapabilties(account.attributes.externalId as string) || [];
-                let  updatedCapabilities: string[] = capabilities
-                for (const capability of entitlements)
-                {
-                    updatedCapabilities = updatedCapabilities.filter(cap => cap !== capability);
-                }
-                await client.removeRole(account.attributes.externalId as string, updatedCapabilities)
-            
+        if (action === AttributeChangeOp.Add) {
+            const capabilities: string[] = (await client.getCapabilties(account.attributes.externalId as string)) || []
+            for (const capability of entitlements) {
+                capabilities.push(capability)
+            }
+            await client.addRole(account.attributes.externalId as string, capabilities)
+        } else if (action === AttributeChangeOp.Remove) {
+            const capabilities: string[] = (await client.getCapabilties(account.attributes.externalId as string)) || []
+            let updatedCapabilities: string[] = capabilities
+            for (const capability of entitlements) {
+                updatedCapabilities = updatedCapabilities.filter((cap) => cap !== capability)
+            }
+            await client.removeRole(account.attributes.externalId as string, updatedCapabilities)
         }
     }
 
-    const removeAll = async(account:Account, groups: any) =>
-    {
-        const rolesToRemove: string[] = [];
+    const removeAll = async (account: Account, groups: any) => {
+        const rolesToRemove: string[] = []
         if (groups) {
-            let roles: string[] = [];
+            let roles: string[] = []
             if (Array.isArray(groups)) {
-                roles = groups;
+                roles = groups
             } else {
-                roles.push(groups);
+                roles.push(groups)
             }
             console.log(roles)
-        for (const group of roles) {
-            if (workgroupRegex.test(group)) {
-                await provisionEntitlement(AttributeChangeOp.Remove, account, group);
-            } else {
-                rolesToRemove.push(group);
+            for (const group of roles) {
+                if (workgroupRegex.test(group)) {
+                    await provisionEntitlement(AttributeChangeOp.Remove, account, group)
+                } else {
+                    rolesToRemove.push(group)
+                }
+            }
+            if (rolesToRemove) {
+                await provisionPermission(AttributeChangeOp.Remove, account, rolesToRemove)
             }
         }
-        if(rolesToRemove){
-        await provisionPermission(AttributeChangeOp.Remove, account, rolesToRemove);}
-    }
     }
 
-    const getLifecycle = async(id:any) =>
-    {
+    const getLifecycle = async (id: any) => {
         return await client.getLCS(id)
     }
 
@@ -137,7 +135,7 @@ export const connector = async () => {
                 res.send({})
             }
         })
-        .stdAccountList(async (context: Context, input: undefined, res: Response<StdAccountListOutput>) => {
+        .stdAccountList(async (context: Context, input: StdAccountListInput, res: Response<StdAccountListOutput>) => {
             const response: AxiosResponse = await client.accountAggregation()
             const workgroups: any[] = await getWorkgroups()
             const accounts = new Set<string>(response.data.map((a: { name: string }) => a.name))
@@ -159,7 +157,6 @@ export const connector = async () => {
         })
         .stdEntitlementList(async (context: Context, input: any, res: Response<StdEntitlementListOutput>) => {
             const response1: AxiosResponse = await client.roleAggregation()
-            const response2: AxiosResponse = await client.workgroupAggregation()
             for (const r of response1.data) {
                 if (!EXCLUDED_ROLES.includes(r.value)) {
                     const role: Role = new Role(r)
@@ -168,11 +165,14 @@ export const connector = async () => {
                     res.send(role)
                 }
             }
-            for (const w of response2.data) {
-                const workgroup: Workgroup = new Workgroup(w)
+            if (includeWorkgroups) {
+                const response2: AxiosResponse = await client.workgroupAggregation()
+                for (const w of response2.data) {
+                    const workgroup: Workgroup = new Workgroup(w)
 
-                logger.info(workgroup)
-                res.send(workgroup)
+                    logger.info(workgroup)
+                    res.send(workgroup)
+                }
             }
         })
         .stdEntitlementRead(
@@ -202,17 +202,15 @@ export const connector = async () => {
                 const response2 = await client.getAccountDetails(rawAccount.name)
                 let account: Account = new Account(response2.data)
                 if (input.attributes.groups != null) {
-                    let values: string[] = []
-                        .concat(input.attributes.groups)
+                    let values: string[] = [].concat(input.attributes.groups)
                     let roles: string[] = values
                     for (const value of values) {
-                        if(workgroupRegex.test(value)){
-                            
+                        if (workgroupRegex.test(value)) {
                             await provisionEntitlement(AttributeChangeOp.Add, account, value)
-                            roles = roles.filter(cap => cap !== value);
+                            roles = roles.filter((cap) => cap !== value)
                         }
-                        }
-                        await provisionPermission(AttributeChangeOp.Add, account, roles)
+                    }
+                    await provisionPermission(AttributeChangeOp.Add, account, roles)
                 }
                 const workgroups: any[] = await getWorkgroups()
                 account = await buildAccount(rawAccount.name as string, workgroups)
@@ -227,19 +225,16 @@ export const connector = async () => {
                 const response = await client.getAccountDetails(input.identity)
                 let account: Account = new Account(response.data)
                 for (const change of input.changes) {
-                    const values: string[] = []
-                        .concat(change.value)
+                    const values: string[] = [].concat(change.value)
                     let roles: string[] = values
                     if (change.op === AttributeChangeOp.Set) {
                         throw new ConnectorError(`Operation not supported: ${change.op}`)
                     } else {
-                        
                         for (const value of values) {
-                        if(workgroupRegex.test(value)){
-                            
-                            await provisionEntitlement(change.op, account, value)
-                            roles = roles.filter(cap => cap !== value);
-                        }
+                            if (workgroupRegex.test(value)) {
+                                await provisionEntitlement(change.op, account, value)
+                                roles = roles.filter((cap) => cap !== value)
+                            }
                         }
                         await provisionPermission(change.op, account, roles)
                     }
@@ -256,15 +251,15 @@ export const connector = async () => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
-            const groups = account.attributes.groups as string||[]
+            const groups = (account.attributes.groups as string) || []
             if (removeGroups && Array.isArray(groups) && groups.length > 0) {
                 const LCS: any = await getLifecycle(account.attributes.externalId)
-                if(typeof LCS === "string" && LCS.toLowerCase() === "inactive"){
-                removeAll(account,groups)
-                account.attributes.groups=[]
+                if (typeof LCS === 'string' && LCS.toLowerCase() === 'inactive') {
+                    removeAll(account, groups)
+                    account.attributes.groups = []
                 }
-            } 
-            account.attributes.enabled= false
+            }
+            account.attributes.enabled = false
             logger.info(account)
             res.send(account)
             await sleep(SLEEP)
@@ -275,7 +270,7 @@ export const connector = async () => {
             logger.info(input)
             const workgroups: any[] = await getWorkgroups()
             const account: Account = await buildAccount(input.identity, workgroups)
-            
+
             account.attributes.enabled = true
             logger.info(account)
             res.send(account)
