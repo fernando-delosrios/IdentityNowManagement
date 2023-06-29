@@ -1,6 +1,6 @@
 {
     "name": "IdentityNowManagement",
-    "version": "1.2",
+    "version": "1.2.1",
     "main": "dist/index.js",
     "scripts": {
         "clean": "shx rm -rf ./dist",
@@ -20,13 +20,12 @@
         "postman-request": "^2.88.1-postman.32"
     },
     "devDependencies": {
-        "@types/jest": "^27.0.1",
         "@vercel/ncc": "^0.34.0",
         "cross-env": "7.0.3",
-        "jest": "^27.0.6",
         "prettier": "^2.3.2",
         "shx": "^0.3.3",
-        "ts-jest": "^27.0.5",
+        "ts-jest": "^29.1.0",
+        "@types/jest": "^29.5.2",
         "typescript": "4.3.5"
     },
     "jest": {
