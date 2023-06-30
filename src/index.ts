@@ -63,7 +63,7 @@ export const connector = async () => {
             workgroups.filter((w) =>
                 w.members.find((a: { externalId: number }) => a.externalId == account.attributes.externalId)
             ) || []
-        const roles: string[] = account.attributes.groups as string[]
+        const roles: string[] = await client.getCapabilties(account.attributes.externalId as string) || []
         account.attributes.groups = [...roles, ...assignedWorkgroups.map((w) => w.id)]
 
         return account
