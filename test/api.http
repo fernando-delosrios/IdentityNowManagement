@@ -1,0 +1,76 @@
+@url = xxx
+
+@clientId = xxx
+@clientSecret = xxx
+
+### Authorise
+# @name auth
+POST {{url}}/oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id={{clientId}}
+&client_secret={{clientSecret}}
+
+### Test
+GET {{url}}/v3/public-identities-config
+Authorization: Bearer {{auth.response.body.access_token}}
+
+### Identities
+POST {{url}}/v3/search?count=true
+Authorization: Bearer {{auth.response.body.access_token}}
+
+{
+  "query": {
+    "query": "@access(source.name.exact:IdentityNow)"
+  },
+  "indices": ["identities"],
+  "sort": ["id"],
+  "includeNested": false,
+  "queryResultFilter": {
+    "includes": ["name"]
+  }
+}
+
+### Roles
+POST {{url}}/v3/search
+Authorization: Bearer {{auth.response.body.access_token}}
+
+{
+  "query": {
+    "query": "source.name.exact:IdentityNow AND attribute:assignedGroups"
+  },
+  "indices": ["entitlements"],
+  "includeNested": false
+}
+
+### Governance groups
+GET {{url}}/v2/workgroups
+Authorization: Bearer {{auth.response.body.access_token}}
+
+### Get account details
+@account = xxx@sailpoint.com
+GET {{url}}/v2/identities/{{account}}
+Authorization: Bearer {{auth.response.body.access_token}}
+
+### Get role details
+@rid=ORG_ADMIN
+POST {{url}}/v3/search
+Authorization: Bearer {{auth.response.body.access_token}}
+
+{
+  "query": {
+    "query": "source.name.exact:IdentityNow AND attribute:assignedGroups AND value:{{rid}}"
+  },
+  "indices": ["entitlements"],
+  "includeNested": false
+}
+
+### Get Governance group
+@gid=974141f0-2a67-48d3-8af2-2800bff88b09
+GET {{url}}/v2/workgroups/{{gid}}
+Authorization: Bearer {{auth.response.body.access_token}}
+
+### Get Governance group members
+GET {{url}}/v2/workgroups/{{gid}}/members
+Authorization: Bearer {{auth.response.body.access_token}}

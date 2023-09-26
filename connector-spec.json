@@ -1,0 +1,170 @@
+{
+    "name": "IdentityNow Management",
+    "commands": [
+        "std:test-connection",
+        "std:account:list",
+        "std:account:read",
+        "std:entitlement:list",
+        "std:entitlement:read",
+        "std:account:update",
+        "std:account:create",
+        "std:account:enable",
+        "std:account:disable"
+    ],
+    "sourceConfig": [
+        {
+            "type": "menu",
+            "label": "Configuration",
+            "items": [
+                {
+                    "type": "section",
+                    "sectionTitle": "IdentityNow connection details",
+                    "sectionHelpMessage": "Add your connection details here",
+                    "items": [
+                        {
+                            "key": "idnUrl",
+                            "label": "IdentityNow API URL",
+                            "type": "url",
+                            "required": true
+                        },
+                        {
+                            "key": "sailpointlogin",
+                            "label": "SailPoint Login URL",
+                            "placeholder": "https://*.login.sailpoint.com/auth",
+                            "type": "url",
+                            "required": true
+                        },
+                        {
+                            "key": "patId",
+                            "label": "Personal Access Token ID",
+                            "type": "text",
+                            "required": true
+                        },
+                        {
+                            "key": "patSecret",
+                            "label": "Personal Access Token secret",
+                            "type": "secret",
+                            "required": true
+                        },
+                        {
+                            "key": "IDToken1",
+                            "label": "Username",
+                            "placeholder": "IDToken1",
+                            "type": "text",
+                            "required": true
+                        },
+                        {
+                            "key": "IDToken2",
+                            "label": "Hashed Password",
+                            "placeholder": "IDToken2",
+                            "type": "secret",
+                            "required": true
+                        }
+                    ]
+                },
+                {
+                    "type": "section",
+                    "sectionTitle": "Configuration details",
+                    "sectionHelpMessage": "Add your configuration details here",
+                    "items": [
+                        {
+                            "key": "removeGroups",
+                            "label": "Remove all entitlements upon Inactive state on Disable",
+                            "type": "checkbox"
+                        },
+                        {
+                            "key": "includeWorkgroups",
+                            "label": "Include governance groups",
+                            "type": "checkbox"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "accountSchema": {
+        "displayAttribute": "name",
+        "identityAttribute": "name",
+        "groupAttribute": "groups",
+        "attributes": [
+            {
+                "name": "id",
+                "type": "string",
+                "description": ""
+            },
+            {
+                "name": "name",
+                "type": "string",
+                "description": ""
+            },
+            {
+                "name": "firstName",
+                "type": "string",
+                "description": ""
+            },
+            {
+                "name": "lastName",
+                "type": "string",
+                "description": ""
+            },
+            {
+                "name": "displayName",
+                "type": "string",
+                "description": ""
+            },
+            {
+                "name": "groups",
+                "type": "string",
+                "description": "",
+                "multi": true,
+                "entitlement": true,
+                "managed": true
+            }
+        ]
+    },
+    "entitlementSchemas": [
+        {
+            "type": "group",
+            "identityAttribute": "value",
+            "displayAttribute": "name",
+            "attributes": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "description": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "string",
+                    "description": "id"
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "description": "type"
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "description": "description"
+                }
+            ]
+        }
+    ],
+    "accountCreateTemplate": {
+        "fields": [
+            {
+                "key": "name",
+                "label": "Name",
+                "type": "string",
+                "required": true,
+                "initialValue": {
+                    "type": "identityAttribute",
+                    "attributes": {
+                        "name": "uid"
+                    }
+                }
+            }
+        ]
+    }
+}
