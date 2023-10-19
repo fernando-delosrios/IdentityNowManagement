@@ -1,6 +1,11 @@
 import { Attributes } from '@sailpoint/connector-sdk'
 
-export class Account {
+const isDisabled = (object: any): boolean => {
+    const status = object.identityStatus
+    return status === 'DISABLED'
+}
+
+export class AccountResponse {
     identity: string
     uuid: string
     attributes: Attributes
@@ -9,13 +14,13 @@ export class Account {
     constructor(object: any) {
         this.attributes = {
             id: object.id,
-            name: object.attributes.uid || object.name,
-            firstName: object.attributes.firstname || object.firstName,
-            lastName: object.attributes.lastname || object.lastName,
-            displayName: object.attributes.displayName || object.displayName,
+            uid: object.attributes.uid,
+            firstName: object.attributes.firstname,
+            lastName: object.attributes.lastname,
+            displayName: object.attributes.displayName,
         }
-        this.disabled = object.enabled !== undefined ? !object.enabled : object.inactive
-        this.identity = this.attributes.name as string
-        this.uuid = this.attributes.name as string
+        this.disabled = isDisabled(object)
+        this.identity = this.attributes.id as string
+        this.uuid = this.attributes.uid as string
     }
 }

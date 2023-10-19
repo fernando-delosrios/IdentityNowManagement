@@ -1,3 +1,4 @@
+//Kept for reference purposes
 import axios, { AxiosRequestConfig, AxiosResponse, AxiosInstance } from 'axios'
 import axiosRetry from 'axios-retry'
 
@@ -36,10 +37,7 @@ export class IDNClient {
         axiosRetry(this.httpClient, {
             retries: 5,
             retryDelay: axiosRetry.exponentialDelay,
-            retryCondition: (error) => {
-                // Only retry if the API call recieves an error code of 429 or 400
-                return error.response!.status === 429 || error.response!.status === 400
-            },
+            retryCondition: axiosRetry.isRetryableError,
         })
     }
 
@@ -124,7 +122,7 @@ export class IDNClient {
         return this.httpClient.request(request)
     }
 
-    async *accountAggregation() {
+    async *getPrivilegedIdentities() {
         const token = await this.getApiToken()
         const url = `/v3/search`
 
@@ -164,9 +162,9 @@ export class IDNClient {
         }
     }
 
-    async getAccountDetails(name: string): Promise<AxiosResponse> {
+    async *accountAggregation() {
         const token = await this.getApiToken()
-        const url = `/v2/search/identities`
+        const url = `/beta/identities`
 
         let request: AxiosRequestConfig = {
             method: 'get',
@@ -177,17 +175,26 @@ export class IDNClient {
                 Accept: 'application/json',
             },
             params: {
-                query: `attributes.uid:${name}`,
+                limit: this.batchSize,
+                count: true,
             },
         }
 
-        const response = await this.httpClient.request(request)
-        response.data = response.data.pop()
+        let pendingItems = true
+        let processed = 0
 
-        return response
+        while (pendingItems) {
+            let response = await this.httpClient.request(request)
+            const total = parseInt(response.headers['x-total-count'])
+            processed += response.data.length
+            pendingItems = total > processed
+            request.params.offset = processed
+            yield response
+            await sleep(this.sleepMs)
+        }
     }
 
-    async getLCS(id: string): Promise<AxiosResponse> {
+    async getAccountDetails(id: string): Promise<AxiosResponse> {
         const token = await this.getApiToken()
         const url = `/beta/identities/${id}`
 
@@ -196,10 +203,91 @@ export class IDNClient {
             url,
             headers: {
                 Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
             },
         }
+
         const response = await this.httpClient.request(request)
+
         return response
+    }
+
+    async getIdentityByUID(uid: string): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/v3/search`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            data: {
+                query: {
+                    query: `attributes.uid.exact:"${uid}"`,
+                },
+                indices: ['identities'],
+                includeNested: true,
+            },
+        }
+
+        const response = await this.httpClient.request(request)
+        response.data = response.data[0]
+
+        return response
+    }
+
+    async getIdentityAccounts(id: string): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/v3/accounts`
+
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            params: {
+                filters: `identityId eq "${id}"`,
+            },
+        }
+
+        const response = await this.httpClient.request(request)
+
+        return response
+    }
+
+    async getIdentityProfiles(): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/v3/identity-profiles`
+
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+        return await this.httpClient.request(request)
+    }
+
+    async getLifecycleStates(id: string): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/v3/identity-profiles/${id}/lifecycle-states`
+
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+        return await this.httpClient.request(request)
     }
 
     async roleAggregation(): Promise<AxiosResponse> {
@@ -260,7 +348,7 @@ export class IDNClient {
 
     async *workgroupAggregation() {
         const token = await this.getApiToken()
-        const url = `/v2/workgroups`
+        const url = `/beta/workgroups`
 
         let request: AxiosRequestConfig = {
             method: 'get',
@@ -327,7 +415,7 @@ export class IDNClient {
         return await this.httpClient.request(request)
     }
 
-    async provisionRoles(id: string, roles: string[]): Promise<AxiosResponse> {
+    async provisionLevels(id: string, roles: string[]): Promise<AxiosResponse> {
         const token = await this.getOathkeeperToken()
         const url = `/oathkeeper/auth-user-v3/auth-users/${id}`
 
@@ -341,6 +429,7 @@ export class IDNClient {
             data: [{ op: 'replace', path: '/capabilities', value: roles }],
         }
 
+        await sleep(2000)
         return await this.httpClient.request(request)
     }
 
@@ -362,6 +451,7 @@ export class IDNClient {
             },
         }
 
+        await sleep(2000)
         return await this.httpClient.request(request)
     }
 
@@ -383,7 +473,31 @@ export class IDNClient {
             },
         }
 
+        await sleep(2000)
         return await this.httpClient.request(request)
+    }
+
+    async setLifecycleState(id: string, lifecycleStateId: string): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/v3/identities/${id}/set-lifecycle-state`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            data: {
+                lifecycleStateId,
+            },
+        }
+
+        const response = await this.httpClient.request(request)
+        await sleep(5000)
+
+        return response
     }
 
     async enableAccount(id: string): Promise<AxiosResponse> {
@@ -398,6 +512,7 @@ export class IDNClient {
             },
         }
 
+        await sleep(2000)
         return await this.httpClient.request(request)
     }
 
@@ -412,7 +527,31 @@ export class IDNClient {
                 Authorization: `Bearer ${token}`,
             },
         }
+
+        await sleep(2000)
         return await this.httpClient.request(request)
+    }
+
+    async processIdentity(id: string): Promise<AxiosResponse> {
+        const token = await this.getApiToken()
+        const url = `/beta/identities/process`
+
+        let request: AxiosRequestConfig = {
+            method: 'post',
+            url,
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            data: {
+                identityIds: [id],
+            },
+        }
+
+        const response = await this.httpClient.request(request)
+
+        return response
     }
 
     async getCapabilities(id: string): Promise<AxiosResponse> {

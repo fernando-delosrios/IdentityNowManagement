@@ -1,14 +1,20 @@
 import { Attributes } from '@sailpoint/connector-sdk'
 
-export class Role {
+export type LCSSource = {
+    name: string
+    value: string
+    description: string
+}
+
+export class LCS {
     identity: string
     uuid: string
-    type: string = 'group'
+    type: string = 'lcs'
     attributes: Attributes
 
-    constructor(object: any) {
+    constructor(object: LCSSource) {
         this.attributes = {
-            type: 'Role',
+            type: 'Lifecycle state',
             name: object.name,
             id: object.value,
             description: object.description,
