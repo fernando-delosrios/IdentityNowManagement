@@ -9,7 +9,8 @@
         "std:account:update",
         "std:account:create",
         "std:account:enable",
-        "std:account:disable"
+        "std:account:disable",
+        "std:account:discover-schema"
     ],
     "sourceConfig": [
         {
@@ -22,41 +23,20 @@
                     "sectionHelpMessage": "Add your connection details here",
                     "items": [
                         {
-                            "key": "idnUrl",
+                            "key": "baseurl",
                             "label": "IdentityNow API URL",
                             "type": "url",
                             "required": true
                         },
                         {
-                            "key": "sailpointlogin",
-                            "label": "SailPoint Login URL",
-                            "placeholder": "https://*.login.sailpoint.com/auth",
-                            "type": "url",
-                            "required": true
-                        },
-                        {
-                            "key": "patId",
+                            "key": "clientId",
                             "label": "Personal Access Token ID",
                             "type": "text",
                             "required": true
                         },
                         {
-                            "key": "patSecret",
+                            "key": "clientSecret",
                             "label": "Personal Access Token secret",
-                            "type": "secret",
-                            "required": true
-                        },
-                        {
-                            "key": "IDToken1",
-                            "label": "Username",
-                            "placeholder": "IDToken1",
-                            "type": "text",
-                            "required": true
-                        },
-                        {
-                            "key": "IDToken2",
-                            "label": "Hashed Password",
-                            "placeholder": "IDToken2",
                             "type": "secret",
                             "required": true
                         }
@@ -68,13 +48,23 @@
                     "sectionHelpMessage": "Add your configuration details here",
                     "items": [
                         {
-                            "key": "removeGroups",
-                            "label": "Remove all entitlements upon Inactive state on Disable",
+                            "key": "enableLevels",
+                            "label": "Enable user level processing?",
                             "type": "checkbox"
                         },
                         {
-                            "key": "includeWorkgroups",
-                            "label": "Include governance groups",
+                            "key": "enableWorkgroups",
+                            "label": "Enable governance groups processing?",
+                            "type": "checkbox"
+                        },
+                        {
+                            "key": "enableLCS",
+                            "label": "Enable lifecycle state processing?",
+                            "type": "checkbox"
+                        },
+                        {
+                            "key": "removeGroups",
+                            "label": "Remove all entitlements on Disable",
                             "type": "checkbox"
                         }
                     ]
@@ -83,40 +73,55 @@
         }
     ],
     "accountSchema": {
-        "displayAttribute": "name",
-        "identityAttribute": "name",
-        "groupAttribute": "groups",
+        "displayAttribute": "uid",
+        "identityAttribute": "id",
         "attributes": [
             {
                 "name": "id",
                 "type": "string",
-                "description": ""
+                "description": "ID"
             },
             {
-                "name": "name",
+                "name": "uid",
                 "type": "string",
-                "description": ""
+                "description": "UID"
             },
             {
                 "name": "firstName",
                 "type": "string",
-                "description": ""
+                "description": "First name"
             },
             {
                 "name": "lastName",
                 "type": "string",
-                "description": ""
+                "description": "Last name"
             },
             {
                 "name": "displayName",
                 "type": "string",
-                "description": ""
+                "description": "Display name"
             },
             {
-                "name": "groups",
+                "name": "levels",
                 "type": "string",
-                "description": "",
+                "description": "User levels",
                 "multi": true,
+                "entitlement": true,
+                "managed": true
+            },
+            {
+                "name": "workgroups",
+                "type": "string",
+                "description": "Governance groups",
+                "multi": true,
+                "entitlement": true,
+                "managed": true
+            },
+            {
+                "name": "lcs",
+                "type": "string",
+                "description": "Lifecycle state",
+                "multi": false,
                 "entitlement": true,
                 "managed": true
             }
@@ -124,7 +129,61 @@
     },
     "entitlementSchemas": [
         {
-            "type": "group",
+            "type": "level",
+            "identityAttribute": "value",
+            "displayAttribute": "name",
+            "attributes": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "description": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "string",
+                    "description": "id"
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "description": "type"
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "description": "description"
+                }
+            ]
+        },
+        {
+            "type": "workgroup",
+            "identityAttribute": "value",
+            "displayAttribute": "name",
+            "attributes": [
+                {
+                    "name": "name",
+                    "type": "string",
+                    "description": "name"
+                },
+                {
+                    "name": "id",
+                    "type": "string",
+                    "description": "id"
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "description": "type"
+                },
+                {
+                    "name": "description",
+                    "type": "string",
+                    "description": "description"
+                }
+            ]
+        },
+        {
+            "type": "lcs",
             "identityAttribute": "value",
             "displayAttribute": "name",
             "attributes": [
@@ -154,8 +213,8 @@
     "accountCreateTemplate": {
         "fields": [
             {
-                "key": "name",
-                "label": "Name",
+                "key": "uid",
+                "label": "UID",
                 "type": "string",
                 "required": true,
                 "initialValue": {
