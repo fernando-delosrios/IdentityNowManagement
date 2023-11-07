@@ -41,6 +41,7 @@ import {
     WorkflowBeta,
     WorkgroupDtoBeta,
 } from 'sailpoint-api-client'
+import jwt_decode from 'jwt-decode'
 
 import { EmailWorkflow } from './model/emailWorkflow'
 import { ErrorEmail } from './model/email'
@@ -712,7 +713,4 @@ export const connector = async () => {
                 res.send(schema)
             }
         )
-}
-function jwt_decode(arg0: string): any {
-    throw new Error('Function not implemented.')
 }
