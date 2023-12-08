@@ -22,6 +22,7 @@ import {
     TestWorkflowRequestBeta,
     IdentitiesBetaApiGetIdentityRequest,
     WorkflowsBetaApiTestWorkflowRequest,
+    IdentitiesBetaApiListIdentitiesRequest,
 } from 'sailpoint-api-client'
 import {
     AccountsApi,
@@ -236,18 +237,33 @@ export class SDKClient {
         return response.data
     }
 
-    async getIdentityByUID(uid: string): Promise<IdentityDocument | undefined> {
-        const api = new SearchApi(this.config)
+    // async getIdentityByUID(uid: string): Promise<IdentityDocument | undefined> {
+    //     const api = new SearchApi(this.config)
 
-        const search: Search = {
-            indices: ['identities'],
-            query: {
-                query: `attributes.uid.exact:"${uid}"`,
-            },
-            sort: ['id'],
-            includeNested: true,
+    //     const search: Search = {
+    //         indices: ['identities'],
+    //         query: {
+    //             query: `attributes.uid.exact:"${uid}"`,
+    //         },
+    //         sort: ['id'],
+    //         includeNested: true,
+    //     }
+    //     const response = await api.searchPost({ search })
+
+    //     if (response.data.length > 0) {
+    //         return response.data[0]
+    //     } else {
+    //         return undefined
+    //     }
+    // }
+
+    async getIdentityByUID(uid: string): Promise<IdentityBeta | undefined> {
+        const api = new IdentitiesBetaApi(this.config)
+
+        const requestParameters: IdentitiesBetaApiListIdentitiesRequest = {
+            filters: `alias eq "${uid}"`,
         }
-        const response = await api.searchPost({ search })
+        const response = await api.listIdentities(requestParameters)
 
         if (response.data.length > 0) {
             return response.data[0]

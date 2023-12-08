@@ -1,6 +1,6 @@
 {
     "name": "IdentityNowManagement",
-    "version": "2.0.0",
+    "version": "2.0.7",
     "main": "dist/index.js",
     "scripts": {
         "clean": "shx rm -rf ./dist",
@@ -14,20 +14,20 @@
     },
     "private": true,
     "dependencies": {
-        "@sailpoint/connector-sdk": "^1.1.3",
-        "axios": "^1.3.4",
-        "axios-retry": "^3.5.1",
-        "jwt-decode": "^3.1.2",
-        "sailpoint-api-client": "^1.2.3"
+        "@sailpoint/connector-sdk": "^1.1.9",
+        "axios": "^1.6.2",
+        "axios-retry": "^3.9.1",
+        "jwt-decode": "^4.0.0",
+        "sailpoint-api-client": "^1.3.0"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.2",
-        "@vercel/ncc": "^0.34.0",
-        "cross-env": "7.0.3",
-        "prettier": "^2.3.2",
-        "shx": "^0.3.3",
-        "ts-jest": "^29.1.0",
-        "typescript": "4.3.5"
+        "@types/jest": "^29.5.8",
+        "@vercel/ncc": "^0.38.1",
+        "cross-env": "^7.0.3",
+        "prettier": "^3.1.0",
+        "shx": "^0.3.4",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.2.2"
     },
     "jest": {
         "preset": "ts-jest",

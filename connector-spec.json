@@ -100,37 +100,13 @@
                 "name": "displayName",
                 "type": "string",
                 "description": "Display name"
-            },
-            {
-                "name": "levels",
-                "type": "string",
-                "description": "User levels",
-                "multi": true,
-                "entitlement": true,
-                "managed": true
-            },
-            {
-                "name": "workgroups",
-                "type": "string",
-                "description": "Governance groups",
-                "multi": true,
-                "entitlement": true,
-                "managed": true
-            },
-            {
-                "name": "lcs",
-                "type": "string",
-                "description": "Lifecycle state",
-                "multi": false,
-                "entitlement": true,
-                "managed": true
             }
         ]
     },
     "entitlementSchemas": [
         {
             "type": "level",
-            "identityAttribute": "value",
+            "identityAttribute": "id",
             "displayAttribute": "name",
             "attributes": [
                 {
@@ -157,7 +133,7 @@
         },
         {
             "type": "workgroup",
-            "identityAttribute": "value",
+            "identityAttribute": "id",
             "displayAttribute": "name",
             "attributes": [
                 {
@@ -184,7 +160,7 @@
         },
         {
             "type": "lcs",
-            "identityAttribute": "value",
+            "identityAttribute": "id",
             "displayAttribute": "name",
             "attributes": [
                 {

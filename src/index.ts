@@ -32,6 +32,7 @@ import { Workgroup } from './model/workgroup'
 import { levels } from './data/levels'
 import { LCS, LCSSource } from './model/lcs'
 import { SDKClient } from './sdk-client'
+import { jwtDecode } from 'jwt-decode'
 import {
     BaseAccount,
     IdentityBeta,
@@ -41,12 +42,17 @@ import {
     WorkflowBeta,
     WorkgroupDtoBeta,
 } from 'sailpoint-api-client'
-import jwt_decode from 'jwt-decode'
 
 import { EmailWorkflow } from './model/emailWorkflow'
 import { ErrorEmail } from './model/email'
 
-function sleep(ms: number) {
+const WORKFLOW_NAME = 'IdentityNow Management - Email sender'
+
+type WorkgroupWithMembers = WorkgroupDtoBeta & {
+    members: ListWorkgroupMembers200ResponseInnerV2[]
+}
+
+const sleep = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
@@ -62,19 +68,8 @@ const safeList = (object: any) => {
     return safeList
 }
 
-const WORKFLOW_NAME = 'IdentityNow Management - Email sender'
-
-type WorkgroupWithMembers = WorkgroupDtoBeta & {
-    members: ListWorkgroupMembers200ResponseInnerV2[]
-}
-
 // Connector must be exported as module property named connector
 export const connector = async () => {
-    // Get connector source config
-    const config = await readConfig()
-    const { removeGroups, enableLevels, enableWorkgroups, enableLCS } = config
-    const client = new SDKClient(config)
-
     const getWorkgroupEntitlements = async (): Promise<Workgroup[]> => {
         const entitlements: Workgroup[] = []
         const workgroups = await client.listWorkgroups()
@@ -277,21 +272,6 @@ export const connector = async () => {
         return workflows.find((x) => x.name === name)
     }
 
-    const workflow = await getWorkflow(WORKFLOW_NAME)
-    if (workflow) {
-        logger.info('Email workflow already present')
-    } else {
-        const accessToken = await client.config.accessToken
-        const jwt = jwt_decode(accessToken as string) as any
-        const identityId = jwt.identity_id
-        const owner: Owner = {
-            id: identityId,
-            type: 'IDENTITY',
-        }
-        const emailWorkflow = new EmailWorkflow(WORKFLOW_NAME, owner)
-        await client.createWorkflow(emailWorkflow)
-    }
-
     const logErrors = async (workflow: WorkflowBeta | undefined, context: Context, input: any, errors: string[]) => {
         let lines = []
         lines.push(`Context: ${JSON.stringify(context)}`)
@@ -305,6 +285,29 @@ export const connector = async () => {
         if (workflow) {
             await client.testWorkflow(workflow!.id!, email)
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Get connector source config
+    const config = await readConfig()
+    const { removeGroups, enableLevels, enableWorkgroups, enableLCS } = config
+    const client = new SDKClient(config)
+
+    const accessToken = await client.config.accessToken
+    const workflow = await getWorkflow(WORKFLOW_NAME)
+    if (workflow) {
+        logger.info('Email workflow already present')
+    } else {
+        const accessToken = await client.config.accessToken
+        const jwt = jwtDecode(accessToken as string) as any
+        const identityId = jwt.identity_id
+        const owner: Owner = {
+            id: identityId,
+            type: 'IDENTITY',
+        }
+        const emailWorkflow = new EmailWorkflow(WORKFLOW_NAME, owner)
+        await client.createWorkflow(emailWorkflow)
     }
 
     return createConnector()
@@ -464,25 +467,24 @@ export const connector = async () => {
                     if (rawAccount) {
                         if ('levels' in input.attributes) {
                             const levels = [].concat(input.attributes.levels).filter((x) => x !== 'user')
-                            await provisionLevels(AttributeChangeOp.Add, rawAccount.id, levels)
+                            await provisionLevels(AttributeChangeOp.Add, rawAccount.id!, levels)
                         }
 
                         if ('workgroups' in input.attributes) {
                             const workgroups = [].concat(input.attributes.workgroups)
-                            await provisionWorkgroups(AttributeChangeOp.Add, rawAccount.id, workgroups)
+                            await provisionWorkgroups(AttributeChangeOp.Add, rawAccount.id!, workgroups)
                         }
 
                         if ('lcs' in input.attributes) {
-                            if (
-                                await isValidLCS(input.attributes.lcs, rawAccount.attributes!.cloudAuthoritativeSource)
-                            ) {
-                                await provisionLCS(AttributeChangeOp.Add, rawAccount.id, input.attributes.lcs)
+                            const cloudAuthoritativeSource = (rawAccount.attributes as any).cloudAuthoritativeSource
+                            if (await isValidLCS(input.attributes.lcs, cloudAuthoritativeSource!)) {
+                                await provisionLCS(AttributeChangeOp.Add, rawAccount.id as string, input.attributes.lcs)
                             } else {
                                 logger.info(`Invalid lcs ${input.attributes.lcs}. Skipping.`)
                             }
                         }
 
-                        const account = await getAccount(rawAccount.id)
+                        const account = await getAccount(rawAccount.id!)
 
                         logger.info(account)
                         res.send(account)
