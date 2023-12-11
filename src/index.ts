@@ -291,22 +291,29 @@ export const connector = async () => {
 
     // Get connector source config
     const config = await readConfig()
-    const { removeGroups, enableLevels, enableWorkgroups, enableLCS } = config
+    const { removeGroups, enableLevels, enableWorkgroups, enableLCS, enableReports } = config
     const client = new SDKClient(config)
 
     const accessToken = await client.config.accessToken
-    const workflow = await getWorkflow(WORKFLOW_NAME)
-    if (workflow) {
-        logger.info('Email workflow already present')
-    } else {
-        const jwt = jwtDecode(accessToken as string) as any
-        const identityId = jwt.identity_id
-        const owner: Owner = {
-            id: identityId,
-            type: 'IDENTITY',
+    let workflow: WorkflowBeta | undefined
+    if (enableReports) {
+        workflow = await getWorkflow(WORKFLOW_NAME)
+        if (workflow) {
+            logger.info('Email workflow already present')
+        } else {
+            const jwt = jwtDecode(accessToken as string) as any
+            const identityId = jwt.identity_id
+            const owner: Owner = {
+                id: identityId,
+                type: 'IDENTITY',
+            }
+            const emailWorkflow = new EmailWorkflow(WORKFLOW_NAME, owner)
+            await client.createWorkflow(emailWorkflow)
         }
-        const emailWorkflow = new EmailWorkflow(WORKFLOW_NAME, owner)
-        await client.createWorkflow(emailWorkflow)
+    } else {
+        if (!accessToken) {
+            throw new Error('Check your connection details. Failed to get access token.')
+        }
     }
 
     return createConnector()
@@ -340,7 +347,7 @@ export const connector = async () => {
                 }
             }
 
-            if (errors.length > 0) {
+            if (enableReports && errors.length > 0) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -365,7 +372,7 @@ export const connector = async () => {
                 throw new ConnectorError('Account not found', ConnectorErrorType.NotFound)
             }
 
-            if (errors.length > 0) {
+            if (enableReports && errors.length > 0) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -409,7 +416,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -451,7 +458,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -497,7 +504,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -552,7 +559,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -593,7 +600,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
 
@@ -631,7 +638,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
 
