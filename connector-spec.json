@@ -48,6 +48,11 @@
                     "sectionHelpMessage": "Add your configuration details here",
                     "items": [
                         {
+                            "key": "enableReports",
+                            "label": "Enable error reports? (workflows needed)",
+                            "type": "checkbox"
+                        },
+                        {
                             "key": "enableLevels",
                             "label": "Enable user level processing?",
                             "type": "checkbox"

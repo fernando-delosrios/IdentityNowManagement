@@ -347,7 +347,7 @@ export const connector = async () => {
                 }
             }
 
-            if (errors.length > 0) {
+            if (enableReports && errors.length > 0) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -372,7 +372,7 @@ export const connector = async () => {
                 throw new ConnectorError('Account not found', ConnectorErrorType.NotFound)
             }
 
-            if (errors.length > 0) {
+            if (enableReports && errors.length > 0) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -416,7 +416,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -458,7 +458,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -504,7 +504,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -559,7 +559,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -600,7 +600,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
 
@@ -638,7 +638,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (errors.length > 0) {
+                if (enableReports && errors.length > 0) {
                     await logErrors(workflow, context, input, errors)
                 }
 
