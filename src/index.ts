@@ -299,7 +299,6 @@ export const connector = async () => {
     if (workflow) {
         logger.info('Email workflow already present')
     } else {
-        const accessToken = await client.config.accessToken
         const jwt = jwtDecode(accessToken as string) as any
         const identityId = jwt.identity_id
         const owner: Owner = {
