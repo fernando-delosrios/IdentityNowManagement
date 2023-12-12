@@ -273,17 +273,19 @@ export const connector = async () => {
     }
 
     const logErrors = async (workflow: WorkflowBeta | undefined, context: Context, input: any, errors: string[]) => {
-        let lines = []
-        lines.push(`Context: ${JSON.stringify(context)}`)
-        lines.push(`Input: ${JSON.stringify(input)}`)
-        lines.push('Errors:')
-        lines = [...lines, ...errors]
-        const message = lines.join('\n')
-        const recipient = await client.getIdentity(workflow!.owner!.id as string)
-        const email = new ErrorEmail(recipient!.attributes!.email, message)
+        if (errors.length > 0) {
+            let lines = []
+            lines.push(`Context: ${JSON.stringify(context)}`)
+            lines.push(`Input: ${JSON.stringify(input)}`)
+            lines.push('Errors:')
+            lines = [...lines, ...errors]
+            const message = lines.join('\n')
+            const recipient = await client.getIdentity(workflow!.owner!.id as string)
+            const email = new ErrorEmail(recipient!.attributes!.email, message)
 
-        if (workflow) {
-            await client.testWorkflow(workflow!.id!, email)
+            if (workflow) {
+                await client.testWorkflow(workflow!.id!, email)
+            }
         }
     }
 
@@ -347,7 +349,7 @@ export const connector = async () => {
                 }
             }
 
-            if (enableReports && errors.length > 0) {
+            if (enableReports) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -372,7 +374,7 @@ export const connector = async () => {
                 throw new ConnectorError('Account not found', ConnectorErrorType.NotFound)
             }
 
-            if (enableReports && errors.length > 0) {
+            if (enableReports) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -416,7 +418,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -458,7 +460,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -504,7 +506,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -559,7 +561,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -600,7 +602,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
 
@@ -638,7 +640,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
 
