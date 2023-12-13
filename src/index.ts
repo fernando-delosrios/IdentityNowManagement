@@ -148,9 +148,7 @@ export const connector = async () => {
                 entitlementAttributes: x.attributes,
             }))
         }
-        const idnAccount = accounts.find(
-            (x) => x.source!.name === 'IdentityNow' || (x.source && x.source.name === 'IdentityNow')
-        )
+        const idnAccount = accounts.find((x) => x.source && x.source.name === 'IdentityNow')
         if (idnAccount) {
             const attributes = idnAccount.entitlementAttributes
             levels = safeList(attributes ? attributes.assignedGroups : undefined)
@@ -337,7 +335,7 @@ export const connector = async () => {
                     const levels = account.attributes.levels as string[]
                     const workgroups = account.attributes.workgroups as string[]
                     const lcs = account.attributes.lcs as string | null
-                    if (levels.length > 1 || workgroups.length > 0 || lcs) {
+                    if ((levels && levels.length > 1) || (workgroups && workgroups.length > 0) || lcs) {
                         logger.info(account)
                         res.send(account)
                     }
