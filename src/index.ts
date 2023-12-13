@@ -47,6 +47,7 @@ import { EmailWorkflow } from './model/emailWorkflow'
 import { ErrorEmail } from './model/email'
 
 const WORKFLOW_NAME = 'IdentityNow Management - Email sender'
+const PROVISIONING_SLEEP = 5000
 
 type WorkgroupWithMembers = WorkgroupDtoBeta & {
     members: ListWorkgroupMembers200ResponseInnerV2[]
@@ -132,10 +133,24 @@ export const connector = async () => {
         logger.info('Fetching levels')
         let levels: string[]
         let accounts: BaseAccount[]
+
         if (privilegedUsers) {
             const privilegedUser = privilegedUsers.find((x) => x.id === id)
             if (privilegedUser) {
                 accounts = privilegedUser.accounts as BaseAccount[]
+                const idnAccount = findIDNAccount(accounts)
+                if (
+                    !(idnAccount && idnAccount.entitlementAttributes && idnAccount.entitlementAttributes.assignedGroups)
+                ) {
+                    //This must be a bug of some sort, perhaps it just takes time for IdentityNow source accounts to be fully updated with entitlements
+                    accounts = (await client.listAccountsByIdentity(id)).map((x) => ({
+                        source: {
+                            id: x.sourceId,
+                            name: x.sourceName,
+                        },
+                        entitlementAttributes: x.attributes,
+                    }))
+                }
             } else {
                 accounts = []
             }
@@ -148,7 +163,8 @@ export const connector = async () => {
                 entitlementAttributes: x.attributes,
             }))
         }
-        const idnAccount = accounts.find((x) => x.source && x.source.name === 'IdentityNow')
+
+        const idnAccount = findIDNAccount(accounts)
         if (idnAccount) {
             const attributes = idnAccount.entitlementAttributes
             levels = safeList(attributes ? attributes.assignedGroups : undefined)
@@ -268,6 +284,12 @@ export const connector = async () => {
         const workflows = await client.listWorkflows()
 
         return workflows.find((x) => x.name === name)
+    }
+
+    const findIDNAccount = (accounts: BaseAccount[]): BaseAccount | undefined => {
+        const idnAccount = accounts.find((x) => x.source && x.source.name === 'IdentityNow')
+
+        return idnAccount
     }
 
     const logErrors = async (workflow: WorkflowBeta | undefined, context: Context, input: any, errors: string[]) => {
@@ -567,45 +589,43 @@ export const connector = async () => {
         .stdAccountDisable(
             async (context: Context, input: StdAccountDisableInput, res: Response<StdAccountDisableOutput>) => {
                 const errors: string[] = []
-                const NOTFOUND_ERROR = 'Identity not found'
                 let identity: IdentityDocument | undefined
                 try {
                     logger.info(input)
                     identity = await client.getIdentity(input.identity)
                     if (identity) {
                         let account = await getAccount(input.identity)
-                        const idnAccount = identity.accounts!.find(
-                            (x) => x.source!.name === 'IdentityNow' || (x.source && x.source.name === 'IdentityNow')
-                        ) as BaseAccount
+                        const idnAccount = findIDNAccount(identity.accounts!)
 
-                        await client.disableAccount(idnAccount.id!)
-                        await sleep(5000)
-                        if (removeGroups) {
-                            const levels = (account.attributes.levels as string[]) || []
-                            await provisionLevels(AttributeChangeOp.Remove, input.identity, levels)
-                            const workgroups = (account.attributes.workgroups as string[]) || []
-                            await provisionWorkgroups(AttributeChangeOp.Remove, input.identity, workgroups)
+                        if (idnAccount) {
+                            await client.disableAccount(idnAccount.id!)
+                            await sleep(PROVISIONING_SLEEP)
+                            if (removeGroups) {
+                                const levels = (account.attributes.levels as string[]) || []
+                                await provisionLevels(AttributeChangeOp.Remove, input.identity, levels)
+                                const workgroups = (account.attributes.workgroups as string[]) || []
+                                await provisionWorkgroups(AttributeChangeOp.Remove, input.identity, workgroups)
+                                await sleep(PROVISIONING_SLEEP)
+                            }
+                            account = await getAccount(input.identity)
+
+                            logger.info(account)
+                            res.send(account)
+                        } else {
+                            throw new Error('IdentityNow account not found')
                         }
-                        account = await getAccount(input.identity)
-
-                        logger.info(account)
-                        res.send(account)
                     } else {
-                        throw new Error(NOTFOUND_ERROR)
+                        throw new Error('Identity not found')
                     }
                 } catch (e) {
                     if (e instanceof Error) {
                         logger.error(e.message)
                         errors.push(e.message)
+                        if (enableReports) {
+                            await logErrors(workflow, context, input, errors)
+                        }
                     }
-                }
-
-                if (enableReports) {
-                    await logErrors(workflow, context, input, errors)
-                }
-
-                if (!identity) {
-                    throw new Error(NOTFOUND_ERROR)
+                    throw e
                 }
             }
         )
@@ -613,37 +633,35 @@ export const connector = async () => {
         .stdAccountEnable(
             async (context: Context, input: StdAccountEnableInput, res: Response<StdAccountEnableOutput>) => {
                 const errors: string[] = []
-                const NOTFOUND_ERROR = 'Identity not found'
                 let identity: IdentityDocument | undefined
 
                 try {
                     logger.info(input)
                     identity = await client.getIdentity(input.identity)
                     if (identity) {
-                        const idnAccount = identity.accounts!.find(
-                            (x) => x.source!.name === 'IdentityNow' || (x.source && x.source.name === 'IdentityNow')
-                        ) as BaseAccount
-                        await client.enableAccount(idnAccount.id!)
-                        await sleep(5000)
-                        const account = await getAccount(input.identity)
-                        logger.info(account)
-                        res.send(account)
+                        const idnAccount = findIDNAccount(identity.accounts!)
+
+                        if (idnAccount) {
+                            await client.enableAccount(idnAccount.id!)
+                            await sleep(PROVISIONING_SLEEP)
+                            const account = await getAccount(input.identity)
+                            logger.info(account)
+                            res.send(account)
+                        } else {
+                            throw new Error('IdentityNow account not found')
+                        }
                     } else {
-                        throw new Error(NOTFOUND_ERROR)
+                        throw new Error('Identity not found')
                     }
                 } catch (e) {
                     if (e instanceof Error) {
                         logger.error(e.message)
                         errors.push(e.message)
+                        if (enableReports) {
+                            await logErrors(workflow, context, input, errors)
+                        }
                     }
-                }
-
-                if (enableReports) {
-                    await logErrors(workflow, context, input, errors)
-                }
-
-                if (!identity) {
-                    throw new Error(NOTFOUND_ERROR)
+                    throw e
                 }
             }
         )
