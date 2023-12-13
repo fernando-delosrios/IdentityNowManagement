@@ -148,9 +148,7 @@ export const connector = async () => {
                 entitlementAttributes: x.attributes,
             }))
         }
-        const idnAccount = accounts.find(
-            (x) => x.source!.name === 'IdentityNow' || (x.source && x.source.name === 'IdentityNow')
-        )
+        const idnAccount = accounts.find((x) => x.source && x.source.name === 'IdentityNow')
         if (idnAccount) {
             const attributes = idnAccount.entitlementAttributes
             levels = safeList(attributes ? attributes.assignedGroups : undefined)
@@ -273,17 +271,19 @@ export const connector = async () => {
     }
 
     const logErrors = async (workflow: WorkflowBeta | undefined, context: Context, input: any, errors: string[]) => {
-        let lines = []
-        lines.push(`Context: ${JSON.stringify(context)}`)
-        lines.push(`Input: ${JSON.stringify(input)}`)
-        lines.push('Errors:')
-        lines = [...lines, ...errors]
-        const message = lines.join('\n')
-        const recipient = await client.getIdentity(workflow!.owner!.id as string)
-        const email = new ErrorEmail(recipient!.attributes!.email, message)
+        if (errors.length > 0) {
+            let lines = []
+            lines.push(`Context: ${JSON.stringify(context)}`)
+            lines.push(`Input: ${JSON.stringify(input)}`)
+            lines.push('Errors:')
+            lines = [...lines, ...errors]
+            const message = lines.join('\n')
+            const recipient = await client.getIdentity(workflow!.owner!.id as string)
+            const email = new ErrorEmail(recipient!.attributes!.email, message)
 
-        if (workflow) {
-            await client.testWorkflow(workflow!.id!, email)
+            if (workflow) {
+                await client.testWorkflow(workflow!.id!, email)
+            }
         }
     }
 
@@ -335,7 +335,7 @@ export const connector = async () => {
                     const levels = account.attributes.levels as string[]
                     const workgroups = account.attributes.workgroups as string[]
                     const lcs = account.attributes.lcs as string | null
-                    if (levels.length > 1 || workgroups.length > 0 || lcs) {
+                    if ((levels && levels.length > 1) || (workgroups && workgroups.length > 0) || lcs) {
                         logger.info(account)
                         res.send(account)
                     }
@@ -347,7 +347,7 @@ export const connector = async () => {
                 }
             }
 
-            if (enableReports && errors.length > 0) {
+            if (enableReports) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -372,7 +372,7 @@ export const connector = async () => {
                 throw new ConnectorError('Account not found', ConnectorErrorType.NotFound)
             }
 
-            if (enableReports && errors.length > 0) {
+            if (enableReports) {
                 await logErrors(workflow, context, input, errors)
             }
         })
@@ -416,7 +416,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -458,7 +458,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -504,7 +504,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -559,7 +559,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
             }
@@ -600,7 +600,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
 
@@ -638,7 +638,7 @@ export const connector = async () => {
                     }
                 }
 
-                if (enableReports && errors.length > 0) {
+                if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
 
