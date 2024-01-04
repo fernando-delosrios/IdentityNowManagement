@@ -92,10 +92,4 @@ export const levels: LevelSource[] = [
         value: 'das:ui-auditor',
         description: 'Auditor access to Data Access Security',
     },
-    {
-        name: 'User',
-        value: 'user',
-        description:
-            'User access to IdentityNow. No special permission, it just enables the identity to be managed in a JML flow',
-    },
 ]

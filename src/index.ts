@@ -172,8 +172,6 @@ export const connector = async () => {
             levels = []
         }
 
-        levels.push('user')
-
         return levels
     }
 
@@ -359,7 +357,7 @@ export const connector = async () => {
                     const lcs = account.attributes.lcs as string | null
                     if (
                         allIdentities ||
-                        (levels && levels.length > 1) ||
+                        (levels && levels.length > 0) ||
                         (workgroups && workgroups.length > 0) ||
                         lcs
                     ) {
@@ -499,7 +497,7 @@ export const connector = async () => {
                     const rawAccount = await client.getIdentityByUID(input.attributes.uid as string)
                     if (rawAccount) {
                         if ('levels' in input.attributes) {
-                            const levels = [].concat(input.attributes.levels).filter((x) => x !== 'user')
+                            const levels = [].concat(input.attributes.levels)
                             await provisionLevels(AttributeChangeOp.Add, rawAccount.id!, levels)
                         }
 
@@ -547,7 +545,7 @@ export const connector = async () => {
                         for (const change of input.changes) {
                             switch (change.attribute) {
                                 case 'levels':
-                                    const levels = [].concat(change.value).filter((x) => x !== 'user')
+                                    const levels = [].concat(change.value)
                                     await provisionLevels(change.op, input.identity, levels)
                                     break
                                 case 'workgroups':
