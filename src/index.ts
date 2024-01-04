@@ -255,7 +255,7 @@ export const connector = async () => {
         const capabilities = await client.getCapabilities(id)
         let resultingRoles: string[] = []
         if (action === AttributeChangeOp.Add) {
-            resultingRoles = [...levels, ...capabilities]
+            resultingRoles = Array.from(new Set([...levels, ...capabilities]))
         } else if (action === AttributeChangeOp.Remove) {
             resultingRoles = capabilities.filter((x) => !levels.includes(x))
         }
@@ -313,7 +313,7 @@ export const connector = async () => {
 
     // Get connector source config
     const config = await readConfig()
-    const { removeGroups, enableLevels, enableWorkgroups, enableLCS, enableReports } = config
+    const { removeGroups, enableLevels, enableWorkgroups, enableLCS, enableReports, allIdentities } = config
     const client = new SDKClient(config)
 
     const accessToken = await client.config.accessToken
@@ -357,7 +357,12 @@ export const connector = async () => {
                     const levels = account.attributes.levels as string[]
                     const workgroups = account.attributes.workgroups as string[]
                     const lcs = account.attributes.lcs as string | null
-                    if ((levels && levels.length > 1) || (workgroups && workgroups.length > 0) || lcs) {
+                    if (
+                        allIdentities ||
+                        (levels && levels.length > 1) ||
+                        (workgroups && workgroups.length > 0) ||
+                        lcs
+                    ) {
                         logger.info(account)
                         res.send(account)
                     }
@@ -600,13 +605,15 @@ export const connector = async () => {
                         if (idnAccount) {
                             await client.disableAccount(idnAccount.id!)
                             await sleep(PROVISIONING_SLEEP)
-                            if (removeGroups) {
-                                const levels = (account.attributes.levels as string[]) || []
-                                await provisionLevels(AttributeChangeOp.Remove, input.identity, levels)
-                                const workgroups = (account.attributes.workgroups as string[]) || []
-                                await provisionWorkgroups(AttributeChangeOp.Remove, input.identity, workgroups)
-                                await sleep(PROVISIONING_SLEEP)
-                            }
+
+                            //Leaving this in place for whoever wants to maintain this convenience option
+                            // if (removeGroups) {
+                            //     const levels = (account.attributes.levels as string[]) || []
+                            //     await provisionLevels(AttributeChangeOp.Remove, input.identity, levels)
+                            //     const workgroups = (account.attributes.workgroups as string[]) || []
+                            //     await provisionWorkgroups(AttributeChangeOp.Remove, input.identity, workgroups)
+                            //     await sleep(PROVISIONING_SLEEP)
+                            // }
                             account = await getAccount(input.identity)
 
                             logger.info(account)

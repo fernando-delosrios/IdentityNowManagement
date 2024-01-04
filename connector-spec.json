@@ -68,8 +68,8 @@
                             "type": "checkbox"
                         },
                         {
-                            "key": "removeGroups",
-                            "label": "Remove all entitlements on Disable",
+                            "key": "allIdentities",
+                            "label": "Aggregate all identities regardless of their user level?",
                             "type": "checkbox"
                         }
                     ]
