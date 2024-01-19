@@ -69,12 +69,31 @@ const safeList = (object: any) => {
     return safeList
 }
 
+const lm = (message: string, component?: string, indentations?: number): string => {
+    const PADDING = '   '
+    indentations = indentations || 0
+
+    let output = ''
+    for (let index = 0; index < indentations; index++) {
+        output += PADDING
+    }
+    if (component) {
+        output += `${component}: `
+    }
+    output += message
+
+    return output
+}
+
 // Connector must be exported as module property named connector
 export const connector = async () => {
     const getWorkgroupEntitlements = async (): Promise<Workgroup[]> => {
+        const c = 'getWorkgroupEntitlements'
         const entitlements: Workgroup[] = []
+        logger.info(lm('Fetching governance groups', c, 1))
         const workgroups = await client.listWorkgroups()
         for (const w of workgroups) {
+            logger.info(lm(`Building governance group ${w.name} object`, c, 2))
             entitlements.push(new Workgroup(w))
         }
 
@@ -82,11 +101,15 @@ export const connector = async () => {
     }
 
     const getLCSEntitlements = async (): Promise<LCS[]> => {
+        const c = 'getLCSEntitlements'
         const entitlements: LCS[] = []
+        logger.info(lm('Fetching identity profiles', c, 1))
         const identityProfiles = await client.listIdentityProfiles()
         for (const ip of identityProfiles) {
+            logger.info(lm(`Processing ${ip.name}. Fetching lifecycle states`, c, 2))
             const states = await client.listLifecycleStates(ip.id as string)
             for (const s of states) {
+                logger.info(lm(`Processing ${s.name}`, c, 3))
                 const state: LCSSource = {
                     name: `${ip.name} - ${s.name}`,
                     value: s.id as string,
@@ -104,10 +127,13 @@ export const connector = async () => {
     }
 
     const getWorkgroupsWithMembers = async (): Promise<WorkgroupWithMembers[]> => {
+        const c = 'getWorkgroupsWithMembers'
         const workgroups: WorkgroupWithMembers[] = []
+        logger.info(lm('Fetching governance groups', c, 1))
         const wgs = await client.listWorkgroups()
 
         for (const w of wgs) {
+            logger.info(lm(`Processing ${w.name}`, c, 2))
             const members = await client.listWorkgroupMembers(w.id as string)
             const workgroup = { ...w, members } as WorkgroupWithMembers
             workgroups.push(workgroup)
@@ -117,7 +143,8 @@ export const connector = async () => {
     }
 
     const getAssignedWorkgroups = async (id: string, groups?: WorkgroupWithMembers[]): Promise<string[]> => {
-        logger.info('Fetching workgroups')
+        const c = 'getAssignedWorkgroups'
+        logger.info(lm('Fetching workgroups', c, 1))
         let workgroups: WorkgroupWithMembers[]
         if (groups) {
             workgroups = groups
@@ -126,17 +153,25 @@ export const connector = async () => {
         }
         const assignedWorkgroups = workgroups.filter((w) => w.members.find((a) => a.externalId == id)).map((w) => w.id!)
 
+        if (assignedWorkgroups.length === 0) {
+            logger.info(lm(`No workgroups found`, c, 1))
+        }
+
         return assignedWorkgroups
     }
 
     const getAssignedLevels = async (id: string, privilegedUsers?: IdentityDocument[]): Promise<string[]> => {
-        logger.info('Fetching levels')
+        const c = 'getAssignedLevels'
+
+        logger.info(lm('Fetching levels', c, 1))
         let levels: string[]
         let accounts: BaseAccount[]
 
         if (privilegedUsers) {
+            logger.info(lm('Privileged identities provided', c, 1))
             const privilegedUser = privilegedUsers.find((x) => x.id === id)
             if (privilegedUser) {
+                logger.info(lm(`Privileged identity ${privilegedUser.name} found`, c, 1))
                 accounts = privilegedUser.accounts as BaseAccount[]
                 const idnAccount = findIDNAccount(accounts)
                 if (
@@ -155,6 +190,7 @@ export const connector = async () => {
                 accounts = []
             }
         } else {
+            logger.info(lm('Fetching privileged identities', c, 1))
             accounts = (await client.listAccountsByIdentity(id)).map((x) => ({
                 source: {
                     id: x.sourceId,
@@ -169,6 +205,7 @@ export const connector = async () => {
             const attributes = idnAccount.entitlementAttributes
             levels = safeList(attributes ? attributes.assignedGroups : undefined)
         } else {
+            logger.info(lm('No IdentityNow account found', c, 1))
             levels = []
         }
 
@@ -176,13 +213,16 @@ export const connector = async () => {
     }
 
     const getAssignedLCS = async (rawAccount: IdentityBeta): Promise<string | null> => {
-        logger.info('Fetching LCS')
+        const c = 'getAssignedLCS'
         let lcs: string | null = null
         if (rawAccount.lifecycleState && rawAccount.lifecycleState.manuallyUpdated) {
+            logger.info(lm('LCS found', c, 1))
             lcs = await getLCSByName(
                 rawAccount.lifecycleState.stateName,
                 (rawAccount.attributes as any).cloudAuthoritativeSource
             )
+        } else {
+            logger.info(lm('LCS not found or automatically set', c, 1))
         }
 
         return lcs
@@ -202,13 +242,21 @@ export const connector = async () => {
     }
 
     const isValidLCS = async (lcsID: string, source: string): Promise<boolean> => {
+        const c = 'isValidLCS'
         let found = false
+        logger.info(lm('Fetching identity profiles', c, 1))
         const identityProfiles = await client.listIdentityProfiles()
         const identityProfile = identityProfiles.find((x) => x.authoritativeSource.id === source)
         if (identityProfile) {
+            logger.info(lm(`Identity profile ${identityProfile.name} found`, c, 1))
+            logger.info(lm('Fetching lifecycle states for profile', c, 1))
             const states = await client.listLifecycleStates(identityProfile.id as string)
             found = states.find((x) => x.id === lcsID) ? true : false
+        } else {
+            logger.info(lm(`No identity profile found for source ${source}`, c, 1))
         }
+
+        logger.info(lm(`Lifecycle state is ${found ? '' : 'not '}valid`, c, 1))
 
         return found
     }
@@ -218,19 +266,23 @@ export const connector = async () => {
         workgroups?: any[],
         privilegedUsers?: IdentityDocument[]
     ): Promise<AccountResponse> => {
+        const c = 'buildAccount'
         const uid = (rawAccount.attributes as any).uid
-        logger.info(`Building account with uid ${uid}`)
+        logger.info(lm(`Building account with uid ${uid}`, c, 1))
         const account: AccountResponse = new AccountResponse(rawAccount)
 
         if (enableLevels) {
+            logger.info(lm('Processing levels', c, 1))
             account.attributes.levels = await getAssignedLevels(account.identity, privilegedUsers)
         }
 
         if (enableWorkgroups) {
+            logger.info(lm('Processing governance groups', c, 1))
             account.attributes.workgroups = await getAssignedWorkgroups(account.identity, workgroups)
         }
 
         if (enableLCS) {
+            logger.info(lm('Processing lifecycle states', c, 1))
             account.attributes.lcs = await getAssignedLCS(rawAccount)
         }
 
@@ -238,8 +290,9 @@ export const connector = async () => {
     }
 
     const provisionWorkgroups = async (action: AttributeChangeOp, id: string, workgroups: string[]) => {
+        const c = 'provisionWorkgroups'
         for (const workgroup of workgroups) {
-            logger.info(`Governance Group| Executing ${action} operation for ${id}/${workgroup}`)
+            logger.info(lm(`Executing ${action} operation for ${id}/${workgroup}`, c, 1))
             if (action === AttributeChangeOp.Add) {
                 await client.addWorkgroup(id, workgroup)
             } else if (action === AttributeChangeOp.Remove) {
@@ -249,7 +302,9 @@ export const connector = async () => {
     }
 
     const provisionLevels = async (action: AttributeChangeOp, id: string, levels: string[]) => {
-        logger.info(`Levels| Executing ${action} operation for ${id}/${levels}`)
+        const c = 'provisionLevels'
+        logger.info(lm(`Executing ${action} operation for ${id}/${levels}`, c, 1))
+        logger.info(lm('Fetching capabilities', c, 1))
         const capabilities = await client.getCapabilities(id)
         let resultingRoles: string[] = []
         if (action === AttributeChangeOp.Add) {
@@ -258,30 +313,38 @@ export const connector = async () => {
             resultingRoles = capabilities.filter((x) => !levels.includes(x))
         }
 
+        logger.info(lm('Setting capabilities', c, 1))
         await client.setCapabilities(id, resultingRoles)
     }
 
     const provisionLCS = async (action: AttributeChangeOp, id: string, lcs: string) => {
-        logger.info(`LCS| Executing ${action} operation for ${id}/${lcs}`)
+        const c = 'provisionLCS'
+        logger.info(lm(`Executing ${action} operation for ${id}/${lcs}`, c, 1))
 
         if (action === AttributeChangeOp.Remove) {
-            logger.info('Ignoring LCS removal request')
+            logger.info(lm('Ignoring LCS removal request', c, 1))
         } else {
+            logger.info(lm(`Setting lifecycle state ${lcs}`, c, 1))
             await client.setLifecycleState(id, lcs)
         }
     }
 
     const getAccount = async (id: string): Promise<AccountResponse> => {
-        logger.info(`Getting details for account ID ${id}`)
+        const c = 'getAccount'
+        logger.info(lm(`Getting details for account ID ${id}`, c, 1))
         const rawAccount = await client.getAccountDetails(id)
         const account = await buildAccount(rawAccount)
         return account
     }
 
     const getWorkflow = async (name: string): Promise<WorkflowBeta | undefined> => {
+        const c = 'getWorkflow'
         const workflows = await client.listWorkflows()
+        const workflow = workflows.find((x) => x.name === name)
 
-        return workflows.find((x) => x.name === name)
+        logger.info(lm(`Workflow ${workflow ? '' : 'not '}found`, c, 1))
+
+        return workflow
     }
 
     const findIDNAccount = (accounts: BaseAccount[]): BaseAccount | undefined => {
@@ -310,17 +373,25 @@ export const connector = async () => {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Get connector source config
+    logger.info('Reading config')
     const config = await readConfig()
-    const { removeGroups, enableLevels, enableWorkgroups, enableLCS, enableReports, allIdentities } = config
+    const { enableLevels, enableWorkgroups, enableLCS, enableReports, allIdentities } = config
+    logger.info('Instantiating SDK client')
     const client = new SDKClient(config)
 
+    logger.info('Fetching access token')
     const accessToken = await client.config.accessToken
+    if (!accessToken) {
+        throw new Error('Check your connection details. Failed to get access token.')
+    }
     let workflow: WorkflowBeta | undefined
     if (enableReports) {
+        logger.info('Fetching email workflow')
         workflow = await getWorkflow(WORKFLOW_NAME)
         if (workflow) {
             logger.info('Email workflow already present')
         } else {
+            logger.info('Creating email workflow')
             const jwt = jwtDecode(accessToken as string) as any
             const identityId = jwt.identity_id
             const owner: Owner = {
@@ -329,10 +400,6 @@ export const connector = async () => {
             }
             const emailWorkflow = new EmailWorkflow(WORKFLOW_NAME, owner)
             await client.createWorkflow(emailWorkflow)
-        }
-    } else {
-        if (!accessToken) {
-            throw new Error('Check your connection details. Failed to get access token.')
         }
     }
 
@@ -345,12 +412,16 @@ export const connector = async () => {
             const errors: string[] = []
 
             try {
+                logger.info('Collecting governance groups with membership')
                 const groups: WorkgroupWithMembers[] = await getWorkgroupsWithMembers()
+                logger.info('Collecting privileged identities')
                 const privilegedUsers = await client.listPrivilegedIdentities()
 
+                logger.info('Collecting all identities')
                 const identities = await client.listIdentities()
 
                 for (const identity of identities) {
+                    logger.info(`Processing ${identity.name}`)
                     const account = await buildAccount(identity, groups, privilegedUsers)
                     const levels = account.attributes.levels as string[]
                     const workgroups = account.attributes.workgroups as string[]
@@ -363,6 +434,8 @@ export const connector = async () => {
                     ) {
                         logger.info(account)
                         res.send(account)
+                    } else {
+                        logger.info(lm(`Discarding ${identity.name}`, undefined, 1))
                     }
                 }
             } catch (e) {
@@ -377,11 +450,13 @@ export const connector = async () => {
             }
         })
         .stdAccountRead(async (context: Context, input: StdAccountReadInput, res: Response<StdAccountReadOutput>) => {
+            const c = 'stdAccountRead'
             const errors: string[] = []
 
             let account: AccountResponse | undefined
+            logger.info(input)
             try {
-                logger.info(input)
+                logger.info(lm(`Fetching ${input.identity} account`, c))
                 account = await getAccount(input.identity)
             } catch (e) {
                 if (e instanceof Error) {
@@ -403,6 +478,7 @@ export const connector = async () => {
         })
         .stdEntitlementList(
             async (context: Context, input: StdEntitlementListInput, res: Response<StdEntitlementListOutput>) => {
+                const c = 'stdEntitlementList'
                 const errors: string[] = []
 
                 try {
@@ -411,24 +487,28 @@ export const connector = async () => {
                     switch (input.type) {
                         case 'level':
                             if (enableLevels) {
+                                logger.info(lm('Fetching level entitlements', c))
                                 entitlements = getLevelEntitlements()
                             }
                             break
 
                         case 'workgroup':
                             if (enableWorkgroups) {
+                                logger.info(lm('Fetching workgroup entitlements', c))
                                 entitlements = await getWorkgroupEntitlements()
                             }
                             break
 
                         case 'lcs':
                             if (enableLCS) {
+                                logger.info(lm('Fetching lcs entitlements', c))
                                 entitlements = await getLCSEntitlements()
                             }
                             break
 
                         default:
-                            throw new ConnectorError(`Unsupported entitlement type ${input.type}`)
+                            const message = `Unsupported entitlement type ${input.type}`
+                            throw new ConnectorError(message)
                     }
                     for (const e of entitlements) {
                         logger.info(e)
@@ -448,6 +528,7 @@ export const connector = async () => {
         )
         .stdEntitlementRead(
             async (context: Context, input: StdEntitlementReadInput, res: Response<StdEntitlementReadOutput>) => {
+                const c = 'stdEntitlementRead'
                 const errors: string[] = []
 
                 try {
@@ -456,15 +537,18 @@ export const connector = async () => {
 
                     switch (input.type) {
                         case 'level':
+                            logger.info(`Fetching ${input.identity} ${input.type} entitlement`, c)
                             entitlement = getLevelEntitlements().find((x) => input.identity === x.identity)
                             break
 
                         case 'workgroup':
+                            logger.info(`Fetching ${input.identity} ${input.type} entitlement`, c)
                             const workgroup = await client.getWorkgroup(input.identity)
                             entitlement = new Workgroup(workgroup)
                             break
 
                         case 'lcs':
+                            logger.info(`Fetching ${input.identity} ${input.type} entitlement`, c)
                             entitlement = (await getLCSEntitlements()).find((x) => input.identity === x.identity)
                             break
 
@@ -490,23 +574,28 @@ export const connector = async () => {
         )
         .stdAccountCreate(
             async (context: Context, input: StdAccountCreateInput, res: Response<StdAccountCreateOutput>) => {
+                const c = 'stdAccountCreate'
                 const errors: string[] = []
 
                 try {
                     logger.info(input)
+                    logger.info(lm(`Fetching identity with UID ${input.attributes.uid}`, c))
                     const rawAccount = await client.getIdentityByUID(input.attributes.uid as string)
                     if (rawAccount) {
                         if ('levels' in input.attributes) {
+                            logger.info(lm('Processing levels', c))
                             const levels = [].concat(input.attributes.levels)
                             await provisionLevels(AttributeChangeOp.Add, rawAccount.id!, levels)
                         }
 
                         if ('workgroups' in input.attributes) {
+                            logger.info(lm('Processing governance groups', c))
                             const workgroups = [].concat(input.attributes.workgroups)
                             await provisionWorkgroups(AttributeChangeOp.Add, rawAccount.id!, workgroups)
                         }
 
                         if ('lcs' in input.attributes) {
+                            logger.info(lm('Processing lifecycle states', c))
                             const cloudAuthoritativeSource = (rawAccount.attributes as any).cloudAuthoritativeSource
                             if (await isValidLCS(input.attributes.lcs, cloudAuthoritativeSource!)) {
                                 await provisionLCS(AttributeChangeOp.Add, rawAccount.id as string, input.attributes.lcs)
@@ -536,23 +625,28 @@ export const connector = async () => {
         )
         .stdAccountUpdate(
             async (context: Context, input: StdAccountUpdateInput, res: Response<StdAccountUpdateOutput>) => {
+                const c = 'stdAccountUpdate'
                 const errors: string[] = []
 
                 try {
                     logger.info(input)
+                    logger.info(lm(`Updating ${input.identity} account`, c))
 
                     if (input.changes) {
                         for (const change of input.changes) {
                             switch (change.attribute) {
                                 case 'levels':
+                                    logger.info(lm('Processing levels', c))
                                     const levels = [].concat(change.value)
                                     await provisionLevels(change.op, input.identity, levels)
                                     break
                                 case 'workgroups':
+                                    logger.info(lm('Processing workgroups', c))
                                     const workgroups = [].concat(change.value)
                                     await provisionWorkgroups(change.op, input.identity, workgroups)
                                     break
                                 case 'lcs':
+                                    logger.info(lm('Processing lcs', c))
                                     const rawAccount = await client.getAccountDetails(input.identity)
                                     const cloudAuthoritativeSource = (rawAccount.attributes as any)
                                         .cloudAuthoritativeSource
@@ -569,7 +663,10 @@ export const connector = async () => {
                         //Need to investigate about std:account:update operations without changes but adding this for the moment
                     } else if ('attributes' in input) {
                         logger.warn(
-                            'No changes detected in account update. Please report unless you used attribute sync which is not supported.'
+                            lm(
+                                'No changes detected in account update. Please report unless you used attribute sync which is not supported.',
+                                c
+                            )
                         )
                     }
 
@@ -591,16 +688,20 @@ export const connector = async () => {
         )
         .stdAccountDisable(
             async (context: Context, input: StdAccountDisableInput, res: Response<StdAccountDisableOutput>) => {
+                const c = 'stdAccountDisable'
                 const errors: string[] = []
                 let identity: IdentityDocument | undefined
                 try {
                     logger.info(input)
+
+                    logger.info(lm(`Fetching ${input.identity} identity`, c))
                     identity = await client.getIdentity(input.identity)
                     if (identity) {
                         let account = await getAccount(input.identity)
                         const idnAccount = findIDNAccount(identity.accounts!)
 
                         if (idnAccount) {
+                            logger.info(lm(`Disabling ${input.identity} account`, c))
                             await client.disableAccount(idnAccount.id!)
                             await sleep(PROVISIONING_SLEEP)
 
@@ -637,16 +738,19 @@ export const connector = async () => {
 
         .stdAccountEnable(
             async (context: Context, input: StdAccountEnableInput, res: Response<StdAccountEnableOutput>) => {
+                const c = 'stdAccountEnable'
                 const errors: string[] = []
                 let identity: IdentityDocument | undefined
 
                 try {
                     logger.info(input)
+
                     identity = await client.getIdentity(input.identity)
                     if (identity) {
                         const idnAccount = findIDNAccount(identity.accounts!)
 
                         if (idnAccount) {
+                            logger.info(lm(`Enabling ${input.identity} account`, c))
                             await client.enableAccount(idnAccount.id!)
                             await sleep(PROVISIONING_SLEEP)
                             const account = await getAccount(input.identity)
