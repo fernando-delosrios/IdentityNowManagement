@@ -412,10 +412,16 @@ export const connector = async () => {
             const errors: string[] = []
 
             try {
-                logger.info('Collecting governance groups with membership')
-                const groups: WorkgroupWithMembers[] = await getWorkgroupsWithMembers()
-                logger.info('Collecting privileged identities')
-                const privilegedUsers = await client.listPrivilegedIdentities()
+                let groups: WorkgroupWithMembers[] = []
+                if (enableWorkgroups) {
+                    logger.info('Collecting governance groups with membership')
+                    groups = await getWorkgroupsWithMembers()
+                }
+                let privilegedUsers: IdentityDocument[] = []
+                if (enableLevels) {
+                    logger.info('Collecting privileged identities')
+                    privilegedUsers = await client.listPrivilegedIdentities()
+                }
 
                 logger.info('Collecting all identities')
                 const identities = await client.listIdentities()
@@ -428,9 +434,9 @@ export const connector = async () => {
                     const lcs = account.attributes.lcs as string | null
                     if (
                         allIdentities ||
-                        (levels && levels.length > 0) ||
-                        (workgroups && workgroups.length > 0) ||
-                        lcs
+                        (enableLevels && levels.length > 0) ||
+                        (enableWorkgroups && workgroups.length > 0) ||
+                        (enableLCS && lcs)
                     ) {
                         logger.info(account)
                         res.send(account)
