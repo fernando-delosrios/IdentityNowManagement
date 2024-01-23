@@ -27,11 +27,13 @@ Features:
 
 Changelog:
 
+-   2.1.4:
+    -   Performance enhancements
+-   2.1.3:
+    -   Added extensive logging for better debugging
 -   2.1.2:
     -   Removed option to remove entitlements when account is disabled. There are better ways of doing this outside the scope of the connector.
     -   Added option to aggregate all identities regardless of their user level. See features section for explanation.
--   2.1.3:
-    -   Added extensive logging for better debugging
 
 ---
 
