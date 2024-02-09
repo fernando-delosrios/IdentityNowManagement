@@ -25,6 +25,7 @@ import {
     StdAccountDisableOutput,
     StdAccountEnableInput,
     StdAccountEnableOutput,
+    StdTestConnectionInput,
 } from '@sailpoint/connector-sdk'
 import { AccountResponse } from './model/account'
 import { Level } from './model/level'
@@ -404,10 +405,12 @@ export const connector = async () => {
     }
 
     return createConnector()
-        .stdTestConnection(async (context: Context, input: undefined, res: Response<StdTestConnectionOutput>) => {
-            logger.info('Test successful!')
-            res.send({})
-        })
+        .stdTestConnection(
+            async (context: Context, input: StdTestConnectionInput, res: Response<StdTestConnectionOutput>) => {
+                logger.info('Test successful!')
+                res.send({})
+            }
+        )
         .stdAccountList(async (context: Context, input: StdAccountListInput, res: Response<StdAccountListOutput>) => {
             const errors: string[] = []
 
