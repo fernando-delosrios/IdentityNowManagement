@@ -14,18 +14,19 @@
     },
     "private": true,
     "dependencies": {
-        "@sailpoint/connector-sdk": "^1.1.11",
-        "axios": "^1.6.7",
-        "axios-retry": "^4.0.0",
-        "jwt-decode": "^4.0.0",
-        "sailpoint-api-client": "^1.3.0"
+        "@sailpoint/connector-sdk": "1.1.11",
+        "axios": "1.6.7",
+        "axios-retry": "4.0.0",
+        "jwt-decode": "4.0.0",
+        "sailpoint-api-client": "1.3.0"
     },
     "devDependencies": {
-        "@vercel/ncc": "^0.38.1",
-        "cross-env": "^7.0.3",
-        "prettier": "^3.2.5",
-        "shx": "^0.3.4",
-        "typescript": "^5.3.3"
+        "@types/node": "20.11.17",
+        "@vercel/ncc": "0.38.1",
+        "cross-env": "7.0.3",
+        "prettier": "3.2.5",
+        "shx": "0.3.4",
+        "typescript": "5.3.3"
     },
     "jest": {
         "preset": "ts-jest",
