@@ -18,15 +18,22 @@
 
 Loopback connector to manage IdentityNow like any other managed system. Allows to manage user levels, governance groups and lifecycle states.
 
-Features:
+## Features:
 
 -   **User levels**: when enabled, the connector manages user levels as entitlements. It aggregates all identities with a user level different from User or every single one if _Aggregate all identities regardless of their user level?_ option is enabled.
 -   **Governance groups**: when enabled, the connector manages governance groups as entitlements.
 -   **Lifecycle states**: when enabled, the connector manages lifecycle states as entitlements. Each different lifecycle state in the system generates an entitlement that can be assigned to an identity. Lifecycle state entitlements removals do nothing, they're only there to be assigned by request. Assigning a lifecycle state from an identity profile different from the target identity's one does nothing. The idea behind lifecycle states entitlements is bundling equivalent ones into access profiles, like _A - inactive_, _B - inactive_ entitlements into _inactive_ access profile and assign the access profile by request. The connector will only apply the matching LCS. Do not use this feature with roles or with entitlements directly.
 -   **Enable/disable account**: identity enable/disable is supported. This is often used in lifecycle states like leaver in combination with the _Aggregate all identities regardless their user level?_ option. Just enable the option and configure your lifecycle state to disable the account, which in turn disables the identity.
 
-Changelog:
+## Installation:
 
+-   Run `npm install` to download all project dependencies
+-   Follow the instructions here to pack the connector zip and upload it to your tenant: https://developer.sailpoint.com/idn/docs/saas-connectivity/test-build-deploy
+
+## Changelog:
+
+-   2.1.5:
+    -   General library update
 -   2.1.4:
     -   Performance enhancements
 -   2.1.3:
