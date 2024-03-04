@@ -118,6 +118,23 @@ export class SDKClient {
         return response.data
     }
 
+    async listIdentitiesByID(ids: string[]): Promise<IdentityDocument[]> {
+        const api = new SearchApi(this.config)
+        const query = ids.map((x) => `id:${x}`).join(' OR ')
+        const search: Search = {
+            indices: ['identities'],
+            query: {
+                query,
+            },
+            sort: ['id'],
+            includeNested: true,
+        }
+
+        const response = await Paginator.paginateSearchApi(api, search)
+
+        return response.data
+    }
+
     async listPrivilegedIdentities(): Promise<IdentityDocument[]> {
         const api = new SearchApi(this.config)
         const search: Search = {
