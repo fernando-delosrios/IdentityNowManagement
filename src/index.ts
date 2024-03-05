@@ -356,27 +356,6 @@ export const connector = async () => {
         return idnAccount
     }
 
-    // const getWorkgroupsIdentities = async (groups: WorkgroupWithMembers[]): Promise<IdentityDocument[]> => {
-    //     const BATCH_SIZE = 15
-    //     let identities: IdentityDocument[] = []
-
-    //     const root: any[] = []
-    //     const identitityIDs = Array.from(
-    //         new Set(root.concat(root.concat(groups.map((x) => x.members)).map((x) => x.externalId)))
-    //     )
-
-    //     let offset = 0
-
-    //     while (offset < identitityIDs.length) {
-    //         const batch = identitityIDs.slice(offset, offset + BATCH_SIZE)
-    //         offset += BATCH_SIZE
-    //         const identityBatch = await client.listIdentitiesByID(batch)
-    //         identities = [...identities, ...identityBatch]
-    //     }
-
-    //     return identities
-    // }
-
     const logErrors = async (workflow: WorkflowBeta | undefined, context: Context, input: any, errors: string[]) => {
         if (errors.length > 0) {
             let lines = []

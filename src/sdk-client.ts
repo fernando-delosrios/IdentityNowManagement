@@ -43,12 +43,12 @@ import {
 import { URL } from 'url'
 
 const TOKEN_URL_PATH = '/oauth/token'
+const BATCH_SIZE = 15
+const retries = 10
 
 function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
-
-const retries = 10
 
 const retryCondition = (error: AxiosError): boolean => {
     return axiosRetry.isRetryableError(error) || (error.response ? error.response.status === 429 : false)
@@ -119,20 +119,30 @@ export class SDKClient {
     }
 
     async listIdentitiesByID(ids: string[]): Promise<IdentityDocument[]> {
+        //I'm not sure how long a search query an be so I'd rather split this in batches
         const api = new SearchApi(this.config)
-        const query = ids.map((x) => `id:${x}`).join(' OR ')
-        const search: Search = {
-            indices: ['identities'],
-            query: {
-                query,
-            },
-            sort: ['id'],
-            includeNested: true,
+        let identities: IdentityDocument[] = []
+
+        let offset = 0
+
+        while (offset < ids.length) {
+            const batch = ids.slice(offset, offset + BATCH_SIZE)
+            offset += BATCH_SIZE
+            const query = ids.map((x) => `id:${x}`).join(' OR ')
+            const search: Search = {
+                indices: ['identities'],
+                query: {
+                    query,
+                },
+                sort: ['id'],
+                includeNested: true,
+            }
+
+            const response = await Paginator.paginateSearchApi(api, search)
+            identities = [...identities, ...response.data]
         }
 
-        const response = await Paginator.paginateSearchApi(api, search)
-
-        return response.data
+        return identities
     }
 
     async listPrivilegedIdentities(): Promise<IdentityDocument[]> {
