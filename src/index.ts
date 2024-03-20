@@ -38,8 +38,8 @@ import {
     BaseAccount,
     IdentityBeta,
     IdentityDocument,
-    ListWorkgroupMembers200ResponseInnerV2,
-    Owner,
+    ListWorkgroupMembers200ResponseInnerBeta,
+    OwnerDto,
     WorkflowBeta,
     WorkgroupDtoBeta,
 } from 'sailpoint-api-client'
@@ -51,7 +51,7 @@ const WORKFLOW_NAME = 'IdentityNow Management - Email sender'
 const PROVISIONING_SLEEP = 5000
 
 type WorkgroupWithMembers = WorkgroupDtoBeta & {
-    members: ListWorkgroupMembers200ResponseInnerV2[]
+    members: ListWorkgroupMembers200ResponseInnerBeta[]
 }
 
 const sleep = (ms: number) => {
@@ -152,7 +152,7 @@ export const connector = async () => {
         } else {
             workgroups = await getWorkgroupsWithMembers()
         }
-        const assignedWorkgroups = workgroups.filter((w) => w.members.find((a) => a.externalId == id)).map((w) => w.id!)
+        const assignedWorkgroups = workgroups.filter((w) => w.members.find((a) => a.id == id)).map((w) => w.id!)
 
         if (assignedWorkgroups.length === 0) {
             logger.info(lm(`No workgroups found`, c, 1))
@@ -395,7 +395,7 @@ export const connector = async () => {
             logger.info('Creating email workflow')
             const jwt = jwtDecode(accessToken as string) as any
             const identityId = jwt.identity_id
-            const owner: Owner = {
+            const owner: OwnerDto = {
                 id: identityId,
                 type: 'IDENTITY',
             }
@@ -669,6 +669,7 @@ export const connector = async () => {
                                     break
                             }
                         }
+                        await sleep(PROVISIONING_SLEEP)
                         //Need to investigate about std:account:update operations without changes but adding this for the moment
                     } else if ('attributes' in input) {
                         logger.warn(
