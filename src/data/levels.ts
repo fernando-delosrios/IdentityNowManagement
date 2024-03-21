@@ -5,8 +5,16 @@ export type LevelSource = {
 }
 
 export const levels: LevelSource[] = [
-    { name: 'Helpdesk', value: 'HELPDESK', description: 'Helpdesk access to IdentityNow' },
-    { name: 'Administrator', value: 'ORG_ADMIN', description: 'Full administrative access to IdentityNow' },
+    {
+        name: 'Helpdesk',
+        value: 'HELPDESK',
+        description: 'Helpdesk access to IdentityNow',
+    },
+    {
+        name: 'Admin',
+        value: 'ORG_ADMIN',
+        description: 'Full administrative access to IdentityNow',
+    },
     {
         name: 'Cert Administrator',
         value: 'CERT_ADMIN',
@@ -61,6 +69,21 @@ export const levels: LevelSource[] = [
         name: 'Access Intelligence Center - Admin',
         value: 'sp:aic-dashboard-admin',
         description: 'Access Intelligence Center - Admin access to IdentityNow',
+    },
+    {
+        name: 'Configuration Hub Admin',
+        value: 'sp:ui-config-hub-admin',
+        description: 'Admin access to Configuration Hub',
+    },
+    {
+        name: 'Configuration Hub Backup Admin',
+        value: 'sp:ui-config-hub-backup-admin',
+        description: 'Backup Admin access to Configuration Hub',
+    },
+    {
+        name: 'Configuration Hub Reader',
+        value: 'sp:ui-config-hub-read',
+        description: 'Reader access to Configuration Hub',
     },
     {
         name: 'SaaS Management - Admin',

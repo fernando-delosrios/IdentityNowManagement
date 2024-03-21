@@ -1,6 +1,7 @@
 import { AxiosError, AxiosRequestConfig } from 'axios'
 import axiosRetry from 'axios-retry'
 import {
+    IdentityDocument,
     Configuration,
     Paginator,
     Search,
@@ -8,14 +9,15 @@ import {
     Account,
     IdentityProfilesBetaApi,
     GovernanceGroupsBetaApi,
+    GovernanceGroupsBetaApiDeleteWorkgroupMembersRequest,
+    GovernanceGroupsBetaApiUpdateWorkgroupMembersRequest,
+    WorkgroupMemberAddItemBeta,
+    WorkgroupMemberDeleteItemBeta,
+    ListWorkgroupMembers200ResponseInnerBeta,
     WorkgroupDtoBeta,
     IdentityProfileBeta,
-    GovernanceGroupsV2Api,
-    ListWorkgroups200ResponseInnerV2,
-    ListWorkgroupMembers200ResponseInnerV2,
     IdentitiesBetaApi,
     IdentityBeta,
-    GovernanceGroupsV2ApiModifyWorkgroupMembersRequest,
     WorkflowBeta,
     WorkflowsBetaApi,
     WorkflowsBetaApiCreateWorkflowRequest,
@@ -33,7 +35,6 @@ import {
     AuthUser,
     AuthUserApi,
     AuthUserApiPatchAuthUserRequest,
-    IdentityDocument,
     JsonPatchOperation,
     LifecycleState,
     LifecycleStatesApi,
@@ -103,8 +104,8 @@ export class SDKClient {
         return response.data
     }
 
-    async listWorkgroupMembers(workgroupId: string): Promise<ListWorkgroupMembers200ResponseInnerV2[]> {
-        const api = new GovernanceGroupsV2Api(this.config)
+    async listWorkgroupMembers(workgroupId: string): Promise<ListWorkgroupMembers200ResponseInnerBeta[]> {
+        const api = new GovernanceGroupsBetaApi(this.config)
         const response = await api.listWorkgroupMembers({ workgroupId })
 
         return response.data
@@ -131,7 +132,11 @@ export class SDKClient {
 
         const response = await Paginator.paginateSearchApi(api, search)
 
-        return response.data
+        if (response.data.length > 0) {
+            return response.data as IdentityDocument[]
+        } else {
+            return []
+        }
     }
 
     async listAccountsByIdentity(id: string): Promise<Account[]> {
@@ -160,27 +165,27 @@ export class SDKClient {
         return response.data
     }
 
-    async addWorkgroup(id: string, workgroupId: string): Promise<void> {
-        const api = new GovernanceGroupsV2Api(this.config)
+    async addWorkgroup(id: string, workgroupId: string): Promise<WorkgroupMemberAddItemBeta[]> {
+        const api = new GovernanceGroupsBetaApi(this.config)
 
-        const requestParameters: GovernanceGroupsV2ApiModifyWorkgroupMembersRequest = {
+        const requestParameters: GovernanceGroupsBetaApiUpdateWorkgroupMembersRequest = {
             workgroupId,
-            modifyWorkgroupMembersRequestV2: { add: [id] },
+            bulkWorkgroupMembersRequestInnerBeta: [{ id }],
         }
-        const response = await api.modifyWorkgroupMembers(requestParameters)
+        const response = await api.updateWorkgroupMembers(requestParameters)
 
         await sleep(2000)
         return response.data
     }
 
-    async removeWorkgroup(id: string, workgroupId: string): Promise<void> {
-        const api = new GovernanceGroupsV2Api(this.config)
+    async removeWorkgroup(id: string, workgroupId: string): Promise<WorkgroupMemberDeleteItemBeta[]> {
+        const api = new GovernanceGroupsBetaApi(this.config)
 
-        const requestParameters: GovernanceGroupsV2ApiModifyWorkgroupMembersRequest = {
+        const requestParameters: GovernanceGroupsBetaApiDeleteWorkgroupMembersRequest = {
             workgroupId,
-            modifyWorkgroupMembersRequestV2: { remove: [id] },
+            bulkWorkgroupMembersRequestInnerBeta: [{ id }],
         }
-        const response = await api.modifyWorkgroupMembers(requestParameters)
+        const response = await api.deleteWorkgroupMembers(requestParameters)
 
         await sleep(2000)
         return response.data
@@ -229,10 +234,10 @@ export class SDKClient {
         return response.data
     }
 
-    async getWorkgroup(workgroupId: string): Promise<ListWorkgroups200ResponseInnerV2> {
-        const api = new GovernanceGroupsV2Api(this.config)
+    async getWorkgroup(id: string): Promise<WorkgroupDtoBeta> {
+        const api = new GovernanceGroupsBetaApi(this.config)
 
-        const response = await api.getWorkgroup({ workgroupId })
+        const response = await api.getWorkgroup({ id })
 
         return response.data
     }
@@ -338,6 +343,10 @@ export class SDKClient {
 
         const response = await api.searchPost({ search })
 
-        return response.data[0]
+        if (response.data.length > 0) {
+            return response.data[0] as IdentityDocument
+        } else {
+            return undefined
+        }
     }
 }
