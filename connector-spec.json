@@ -12,6 +12,8 @@
         "std:account:disable",
         "std:account:discover-schema"
     ],
+    "showDebugLoggingOption": true,
+    "supportsCustomSchemas": true,
     "sourceConfig": [
         {
             "type": "menu",
