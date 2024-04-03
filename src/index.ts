@@ -48,7 +48,8 @@ import { EmailWorkflow } from './model/emailWorkflow'
 import { ErrorEmail } from './model/email'
 
 const WORKFLOW_NAME = 'IdentityNow Management - Email sender'
-const PROVISIONING_SLEEP = 5000
+const PROVISIONING_SLEEP = 5 * 1000
+const PROCESSINGWAIT = 60 * 1000
 
 type WorkgroupWithMembers = WorkgroupDtoBeta & {
     members: ListWorkgroupMembers200ResponseInnerBeta[]
@@ -416,6 +417,10 @@ export const connector = async () => {
         .stdAccountList(async (context: Context, input: StdAccountListInput, res: Response<StdAccountListOutput>) => {
             const errors: string[] = []
 
+            const interval = setInterval(() => {
+                res.keepAlive()
+            }, PROCESSINGWAIT)
+
             try {
                 let identities: Identity[] = []
 
@@ -431,6 +436,7 @@ export const connector = async () => {
                     privilegedUsers = await client.listPrivilegedIdentities()
                 }
 
+                logger.info('Collecting identities')
                 if (allIdentities) {
                     identities = await client.listIdentities()
                 } else {
@@ -451,8 +457,6 @@ export const connector = async () => {
                         }
                     }
                 }
-
-                logger.info('Collecting all identities')
 
                 for (const identity of identities) {
                     logger.info(`Processing ${identity.name}`)
@@ -482,6 +486,8 @@ export const connector = async () => {
             if (enableReports) {
                 await logErrors(workflow, context, input, errors)
             }
+
+            clearInterval(interval)
         })
         .stdAccountRead(async (context: Context, input: StdAccountReadInput, res: Response<StdAccountReadOutput>) => {
             const c = 'stdAccountRead'
@@ -514,6 +520,10 @@ export const connector = async () => {
             async (context: Context, input: StdEntitlementListInput, res: Response<StdEntitlementListOutput>) => {
                 const c = 'stdEntitlementList'
                 const errors: string[] = []
+
+                const interval = setInterval(() => {
+                    res.keepAlive()
+                }, PROCESSINGWAIT)
 
                 try {
                     logger.info(input)
@@ -558,6 +568,8 @@ export const connector = async () => {
                 if (enableReports) {
                     await logErrors(workflow, context, input, errors)
                 }
+
+                clearInterval(interval)
             }
         )
         .stdEntitlementRead(

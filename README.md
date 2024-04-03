@@ -32,6 +32,12 @@ Loopback connector to manage IdentityNow like any other managed system. Allows t
 
 ## Changelog:
 
+-   2.1.7:
+    -   Added keepalive responses
+    -   Added account aggregation performance improvements
+    -   Made debug messages optional
+-   2.1.6:
+    -   sailpoint-api-client update (v2 API deprecation)
 -   2.1.5:
     -   General library update
 -   2.1.4:
