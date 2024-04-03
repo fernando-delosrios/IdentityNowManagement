@@ -1,6 +1,6 @@
 {
     "name": "IdentityNowManagement",
-    "version": "2.1.6",
+    "version": "2.1.7",
     "main": "dist/index.js",
     "scripts": {
         "clean": "shx rm -rf ./dist",
