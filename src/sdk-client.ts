@@ -140,7 +140,7 @@ export class SDKClient {
             }
 
             const response = await Paginator.paginateSearchApi(api, search)
-            identities = [...identities, ...response.data]
+            identities = [...identities, ...response.data] as IdentityDocument[]
         }
 
         return identities
